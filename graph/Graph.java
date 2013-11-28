@@ -8,6 +8,8 @@ import java.util.TreeSet;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.util.Iterator;
+
 
 /* Do not add or remove public or protected members, or modify the signatures of
  * any public methods.  You may make changes that don't affect the API as seen
@@ -71,6 +73,16 @@ public abstract class Graph<VLabel, ELabel> {
             _outgoing.add(edge);
         }
 
+        /** Removes outgoing edge EDGE from this vertex. */
+        private void removeOutgoing(Edge edge) {
+            _outgoing.remove(edge);
+        }
+
+        /** Removes incoming edge EDGE from this vertex. */
+        private void removeIncoming(Edge edge) {
+            _incoming.remove(edge);
+        }
+
         /** Returns the number of outgoing edges from this vertex. */
         private int outDegree() {
             return _outgoing.size();
@@ -84,6 +96,17 @@ public abstract class Graph<VLabel, ELabel> {
         /** Returns the number of edges adjacent this vertex. */
         private int degree() {
             return _outgoing.size() + _incoming.size();
+        }
+
+        /** Returns true iff this Vertex contains an outgoing edge
+         *  with V as its opposite vertex. */
+        private boolean containsEdgeTo(Vertex v) {
+            for (Edge e : _outgoing) {
+                if (e.getV(this) == v) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
@@ -234,21 +257,21 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns true iff there is an edge (U, V) in me with any label. */
     public boolean contains(Vertex u, Vertex v) {
-        return _edges.contains(new Edge(u, v, null));
+        return u.containsEdgeTo(v);
     }
 
     /** Returns true iff there is an edge (U, V) in me with label LABEL. */
     public boolean contains(Vertex u, Vertex v,
                             ELabel label) {
-        // FIXME
-        return false;
+        return _edges.contains(new Edge(u, v, label));
     }
 
     /** Returns a new vertex labeled LABEL, and adds it to me with no
      *  incident edges. */
     public Vertex add(VLabel label) {
-        // FIXME
-        return null;
+        Vertex v = new Vertex(label);
+        _vertices.add(v);
+        return v;
     }
 
     /** Returns an edge incident on FROM and TO, labeled with LABEL
@@ -257,8 +280,11 @@ public abstract class Graph<VLabel, ELabel> {
     public Edge add(Vertex from,
                     Vertex to,
                     ELabel label) {
-        // FIXME
-        return null;
+        Edge e = new Edge(from, to, label);
+        _edges.add(e);
+        from.addOutgoingEdge(e);
+        to.addIncomingEdge(e);
+        return e;
     }
 
     /** Returns an edge incident on FROM and TO with a null label
@@ -266,31 +292,48 @@ public abstract class Graph<VLabel, ELabel> {
      *  (leaves FROM and enters TO). */
     public Edge add(Vertex from,
                     Vertex to) {
-        // FIXME
-        return null;
+        return add(from, to, null);
     }
 
     /** Remove V and all adjacent edges, if present. */
     public void remove(Vertex v) {
-        // FIXME
+        Vertex other;
+        for (Edge e : outEdges(v)) {
+            other = e.getV(v);
+            other.removeIncoming(e);
+            _edges.remove(e);
+        }
+        for (Edge e : inEdges(v)) {
+            other = e.getV(v);
+            other.removeOutgoing(e);
+            _edges.remove(e);
+        }
+        _vertices.remove(v);
     }
 
     /** Remove E from me, if present.  E must be between my vertices,
      *  or the result is undefined.  */
     public void remove(Edge e) {
-        // FIXME
+        e.getV0().removeOutgoing(e);
+        e.getV1().removeIncoming(e);
+        _edges.remove(e);
     }
 
     /** Remove all edges from V1 to V2 from me, if present.  The result is
      *  undefined if V1 and V2 are not among my vertices.  */
     public void remove(Vertex v1, Vertex v2) {
-        // FIXME
+        for (Edge e : outEdges(v1)) {
+            if (e.getV(v1) == v2) {
+                v1.removeOutgoing(e);
+                v2.removeIncoming(e);
+                _edges.remove(e);
+            }
+        }
     }
 
     /** Returns an Iterator over all vertices in arbitrary order. */
     public Iteration<Vertex> vertices() {
-        // FIXME
-        return null;
+        return Iteration.iteration(_vertices.iterator());
     }
 
     /** Returns an iterator over all successors of V. */
@@ -313,8 +356,7 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns an iterator over all edges in me. */
     public Iteration<Edge> edges() {
-        return null;
-        // FIXME
+        return Iteration.iteration(_edges.iterator());
     }
 
     /** Returns iterator over all outgoing edges from V. */
@@ -358,8 +400,8 @@ public abstract class Graph<VLabel, ELabel> {
     }
 
     /** Edges in this graph. */
-    protected final TreeSet _edges;
+    protected final TreeSet<Edge> _edges;
     /** Vertices in this graph. */
-    protected final TreeSet _vertices;
+    protected final TreeSet<Vertex> _vertices;
 
 }
