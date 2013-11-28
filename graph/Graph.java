@@ -396,12 +396,29 @@ public abstract class Graph<VLabel, ELabel> {
      *  addition of edges may cause the edges to be reordered
      *  arbitrarily.  */
     public void orderEdges(Comparator<ELabel> comparator) {
-        // FIXME
+        TreeSet<Edge> newEdges =
+            new TreeSet<Edge>(new EdgeLabelComparator(comparator));
+        newEdges.addAll(_edges);
+        _edges = newEdges;
+    }
+
+    /** Comparator class for edges that wraps comparators for ELabels. */
+    private class EdgeLabelComparator implements Comparator<Edge> {
+        EdgeLabelComparator(Comparator<ELabel> comparator) {
+            _comparator = comparator;
+        }
+
+        @Override
+        public int compare(Edge e1, Edge e2) {
+            return _comparator.compare(e1.getLabel(), e2.getLabel());
+        }
+
+        private final Comparator<ELabel> _comparator;
     }
 
     /** Edges in this graph. */
-    protected final TreeSet<Edge> _edges;
+    protected TreeSet<Edge> _edges;
     /** Vertices in this graph. */
-    protected final TreeSet<Vertex> _vertices;
+    protected TreeSet<Vertex> _vertices;
 
 }
