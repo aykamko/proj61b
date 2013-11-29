@@ -4,12 +4,15 @@ import java.util.Comparator;
 
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.HashSet;
+
+import java.util.Map;
+import java.util.HashMap;
 
 import java.util.List;
 import java.util.ArrayList;
 
 import java.util.Iterator;
-
 
 /* Do not add or remove public or protected members, or modify the signatures of
  * any public methods.  You may make changes that don't affect the API as seen
@@ -50,7 +53,6 @@ public abstract class Graph<VLabel, ELabel> {
             _label = label;
             _outgoing = new ArrayList<Edge>();
             _incoming = new ArrayList<Edge>();
-            _edges = _outgoing;
         }
 
         /** Returns the label on this vertex. */
@@ -136,6 +138,7 @@ public abstract class Graph<VLabel, ELabel> {
             if (obj instanceof Graph.Vertex) {
                 Vertex compare = (Vertex) obj;
                 return this.getLabel().equals(compare.getLabel());
+                // FIXME
             } else {
                 return false;
             }
@@ -143,7 +146,14 @@ public abstract class Graph<VLabel, ELabel> {
 
         @Override
         public int hashCode() {
-            return this.getLabel().hashCode();
+            int hash = 0;
+            for (Edge e : _incoming) {
+                hash += HASH_CONST * e.hashCode();
+            }
+            for (Edge e : _outgoing) {
+                hash += (int) Math.pow(HASH_CONST, 2) * e.hashCode();
+            }
+            return this.getLabel().hashCode() + hash;
         }
 
         /** The label on this vertex. */
@@ -152,10 +162,6 @@ public abstract class Graph<VLabel, ELabel> {
         private final List<Edge> _outgoing;
         /** Incoming edges of this vertex. */
         private final List<Edge> _incoming;
-        /** Edges of this vertex (in an undirected graph). This is just
-         *  for convenience. */
-        private final List<Edge> _edges;
-
     }
 
     /** Represents one of my edges. */
@@ -226,7 +232,6 @@ public abstract class Graph<VLabel, ELabel> {
         /** Endpoints of this edge.  In directed edges, this edge exits _V0
          *  and enters _V1. */
         private final Vertex _v0, _v1;
-
         /** The label on this edge. */
         private final ELabel _label;
 
@@ -236,8 +241,11 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Constructs and empty graph. */
     Graph() {
-        _edges = new TreeSet<Edge>();
-        _vertices = new TreeSet<Vertex>();
+        _edgeLabels = new TreeSet<ELabel>();
+        _vertexLabels = new HashSet<VLabel>();
+        _edges = new HashMap<ELabel, Edge>();
+        _unlabeledEdges = new ArrayList<Edge>();
+        _vertices = new HashMap<VLabel, Vertex>();
     }
 
     /** Returns the number of vertices in me. */
@@ -247,7 +255,7 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns the number of edges in me. */
     public int edgeSize() {
-        return _edges.size();
+        return _edges.size() + _unlabeledEdges.size();
     }
 
     /** Returns true iff I am a directed graph. */
@@ -279,15 +287,19 @@ public abstract class Graph<VLabel, ELabel> {
     /** Returns true iff there is an edge (U, V) in me with label LABEL. */
     public boolean contains(Vertex u, Vertex v,
                             ELabel label) {
-        return _edges.contains(new Edge(u, v, label));
+        Edge e = _edges.get(label);
+        return (e != null && e.getV0() == u && e.getV1() == v);
     }
 
     /** Returns a new vertex labeled LABEL, and adds it to me with no
      *  incident edges. */
     public Vertex add(VLabel label) {
-        Vertex v = new Vertex(label);
-        _vertices.add(v);
-        return v;
+        if (_vertexLabels.add(label)) {
+            Vertex v = new Vertex(label);
+            _vertices.put(label, v);
+            return v;
+        }
+        return null;
     }
 
     /** Returns an edge incident on FROM and TO, labeled with LABEL
@@ -296,11 +308,14 @@ public abstract class Graph<VLabel, ELabel> {
     public Edge add(Vertex from,
                     Vertex to,
                     ELabel label) {
-        Edge e = new Edge(from, to, label);
-        _edges.add(e);
-        from.addOutgoingEdge(e);
-        to.addIncomingEdge(e);
-        return e;
+        if (_edgeLabels.add(label)) {
+            Edge e = new Edge(from, to, label);
+            _edges.put(label, e);
+            from.addOutgoingEdge(e);
+            to.addIncomingEdge(e);
+            return e;
+        }
+        return null;
     }
 
     /** Returns an edge incident on FROM and TO with a null label
@@ -308,22 +323,23 @@ public abstract class Graph<VLabel, ELabel> {
      *  (leaves FROM and enters TO). */
     public Edge add(Vertex from,
                     Vertex to) {
-        return add(from, to, null);
+        Edge e = new Edge(from, to, null);
+        _unlabeledEdges.add(e);
+        from.addOutgoingEdge(e);
+        to.addIncomingEdge(e);
+        return e;
     }
 
     /** Remove V and all adjacent edges, if present. */
     public void remove(Vertex v) {
         Vertex other;
         for (Edge e : outEdges(v)) {
-            other = e.getV(v);
-            other.removeIncoming(e);
-            _edges.remove(e);
+            remove(e);
         }
         for (Edge e : inEdges(v)) {
-            other = e.getV(v);
-            other.removeOutgoing(e);
-            _edges.remove(e);
+            remove(e);
         }
+        _vertexLabels.remove(v.getLabel());
         _vertices.remove(v);
     }
 
@@ -332,6 +348,7 @@ public abstract class Graph<VLabel, ELabel> {
     public void remove(Edge e) {
         e.getV0().removeOutgoing(e);
         e.getV1().removeIncoming(e);
+        _edgeLabels.remove(e.getLabel());
         _edges.remove(e);
     }
 
@@ -340,34 +357,124 @@ public abstract class Graph<VLabel, ELabel> {
     public void remove(Vertex v1, Vertex v2) {
         for (Edge e : outEdges(v1)) {
             if (e.getV(v1) == v2) {
-                v1.removeOutgoing(e);
-                v2.removeIncoming(e);
-                _edges.remove(e);
+                remove(e);
             }
         }
     }
 
     /** Returns an Iterator over all vertices in arbitrary order. */
     public Iteration<Vertex> vertices() {
-        return Iteration.iteration(_vertices.iterator());
+        return Iteration.iteration(_vertices.values().iterator());
     }
 
     /** Returns an iterator over all successors of V. */
     public Iteration<Vertex> successors(Vertex v) {
         return Iteration.iteration(
-                new OtherVertexIterator(v.outgoingEdges(), v));
+                new OtherVertexIterator(outEdges(v), v));
     }
 
     /** Returns an iterator over all predecessors of V. */
     public Iteration<Vertex> predecessors(Vertex v) {
         return Iteration.iteration(
-                new OtherVertexIterator(v.incomingEdges(), v));
+                new OtherVertexIterator(inEdges(v), v));
     }
 
+
+    /** Returns successors(V).  This is a synonym typically used on
+     *  undirected graphs. */
+    public final Iteration<Vertex> neighbors(Vertex v) {
+        return successors(v);
+    }
+
+    /** Returns an iterator over all edges in me. */
+    public Iteration<Edge> edges() {
+        return Iteration.iteration(
+                new EdgeIterator(_edgeLabels, _edges, _unlabeledEdges));
+    }
+
+    /** Returns iterator over all outgoing edges from V. */
+    public Iteration<Edge> outEdges(Vertex v) {
+        return Iteration.iteration(v.outgoingEdges());
+    }
+
+    /** Returns iterator over all incoming edges to V. */
+    public Iteration<Edge> inEdges(Vertex v) {
+        return Iteration.iteration(v.incomingEdges());
+    }
+
+    /** Returns outEdges(V). This is a synonym typically used
+     *  on undirected graphs. */
+    public final Iteration<Edge> edges(Vertex v) {
+        return outEdges(v);
+    }
+
+    /** Cause subsequent calls to edges() to visit or deliver
+     *  edges in sorted order, according to COMPARATOR. Subsequent
+     *  addition of edges may cause the edges to be reordered
+     *  arbitrarily.  */
+    public void orderEdges(Comparator<ELabel> comparator) {
+        TreeSet<ELabel> newEdgeLabels = new TreeSet<ELabel>(comparator);
+        newEdgeLabels.addAll(_edgeLabels);
+        _edgeLabels = newEdgeLabels;
+    }
+
+    /** Returns the natural ordering on T, as a Comparator.  For
+     *  example, if stringComp = Graph.<Integer>naturalOrder(), then
+     *  stringComp.compare(x1, y1) is <0 if x1<y1, ==0 if x1=y1, and >0
+     *  otherwise. */
+    public static <T extends Comparable<? super T>> Comparator<T> naturalOrder()
+    {
+        return new Comparator<T>() {
+            @Override
+            public int compare(T x1, T x2) {
+                return x1.compareTo(x2);
+            }
+        };
+    }
+
+    /** Iterates over the edges in EDGEMAP using the order of the labels
+     *  in LABELSET, then finishes by iterating over all unlabeled edges
+     *  in UNLABELED. */
+    private class EdgeIterator implements Iterator<Edge> {
+        EdgeIterator(TreeSet<ELabel> labelSet, 
+                HashMap<ELabel, Edge> edgeMap, ArrayList<Edge> unlabeled) {
+            _labelSet = labelSet;
+            _edgeMap = edgeMap;
+            _unlabeled = unlabeled;
+            _labelIter = _labelSet.iterator();
+            _unlabeledIter = _unlabeled.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return _labelIter.hasNext() || _unlabeledIter.hasNext();
+        }
+
+        @Override
+        public Edge next() {
+            if (_labelIter.hasNext()) {
+                return _edgeMap.get(_labelIter.next());
+            }
+            return _unlabeledIter.next();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("remove not supported");
+        }
+
+        private final Iterator<Edge> _unlabeledIter;
+        private final Iterator<ELabel> _labelIter;
+        private final ArrayList<Edge> _unlabeled;
+        private final TreeSet<ELabel> _labelSet;
+        private final HashMap<ELabel, Edge> _edgeMap;
+    }
+
+
     /** Class that iterates over the vertices on the opposite side
-     *  of the edges returned by iterator ITER from some adjacent vertex V. */
+     *  of the edges returned by iteration ITER from some adjacent vertex V. */
     private class OtherVertexIterator implements Iterator<Vertex> {
-        OtherVertexIterator(Iterator<Edge> iter, Vertex v) {
+        OtherVertexIterator(Iteration<Edge> iter, Vertex v) {
             _iter = iter;
             _v = v;
         }
@@ -388,78 +495,19 @@ public abstract class Graph<VLabel, ELabel> {
         }
 
         private final Vertex _v;
-        private final Iterator<Edge> _iter;
+        private final Iteration<Edge> _iter;
     }
 
-    /** Returns successors(V).  This is a synonym typically used on
-     *  undirected graphs. */
-    public final Iteration<Vertex> neighbors(Vertex v) {
-        return successors(v);
-    }
+    /** Labels for edges in a graph. */
+    private TreeSet<ELabel> _edgeLabels;
+    /** Labels for vertices in a graph. */
+    private HashSet<VLabel> _vertexLabels;
 
-    /** Returns an iterator over all edges in me. */
-    public Iteration<Edge> edges() {
-        return Iteration.iteration(_edges.iterator());
-    }
-
-    /** Returns iterator over all outgoing edges from V. */
-    public Iteration<Edge> outEdges(Vertex v) {
-        return Iteration.iteration(v.outgoingEdges());
-    }
-
-    /** Returns iterator over all incoming edges to V. */
-    public Iteration<Edge> inEdges(Vertex v) {
-        return Iteration.iteration(v.incomingEdges());
-    }
-
-    /** Returns outEdges(V). This is a synonym typically used
-     *  on undirected graphs. */
-    public final Iteration<Edge> edges(Vertex v) {
-        return outEdges(v);
-    }
-
-    /** Returns the natural ordering on T, as a Comparator.  For
-     *  example, if stringComp = Graph.<Integer>naturalOrder(), then
-     *  stringComp.compare(x1, y1) is <0 if x1<y1, ==0 if x1=y1, and >0
-     *  otherwise. */
-    public static <T extends Comparable<? super T>> Comparator<T> naturalOrder()
-    {
-        return new Comparator<T>() {
-            @Override
-            public int compare(T x1, T x2) {
-                return x1.compareTo(x2);
-            }
-        };
-    }
-
-    /** Cause subsequent calls to edges() to visit or deliver
-     *  edges in sorted order, according to COMPARATOR. Subsequent
-     *  addition of edges may cause the edges to be reordered
-     *  arbitrarily.  */
-    public void orderEdges(Comparator<ELabel> comparator) {
-        TreeSet<Edge> newEdges =
-            new TreeSet<Edge>(new EdgeLabelComparator(comparator));
-        newEdges.addAll(_edges);
-        _edges = newEdges;
-    }
-
-    /** Comparator class for edges that wraps comparators for ELabels. */
-    private class EdgeLabelComparator implements Comparator<Edge> {
-        EdgeLabelComparator(Comparator<ELabel> comparator) {
-            _comparator = comparator;
-        }
-
-        @Override
-        public int compare(Edge e1, Edge e2) {
-            return _comparator.compare(e1.getLabel(), e2.getLabel());
-        }
-
-        private final Comparator<ELabel> _comparator;
-    }
-
-    /** Edges in this graph. */
-    protected TreeSet<Edge> _edges;
+    /** Labeld edges in this graph. */
+    private HashMap<ELabel, Edge> _edges;
     /** Vertices in this graph. */
-    protected TreeSet<Vertex> _vertices;
+    private HashMap<VLabel, Vertex> _vertices;
+    /** Unlabeled edges in this graph. */
+    private ArrayList<Edge> _unlabeledEdges;
 
 }

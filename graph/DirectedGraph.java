@@ -6,12 +6,13 @@ package graph;
 
 /** A directed graph with vertices labeled with VLABEL and edges
  *  labeled with ELABEL.
- *  @author
+ *  @author Aleks Kamko
  */
 public class DirectedGraph<VLabel, ELabel> extends Graph<VLabel, ELabel> {
 
     /** An empty graph. */
     public DirectedGraph() {
+        super();
     }
 
     @Override
@@ -19,6 +20,6 @@ public class DirectedGraph<VLabel, ELabel> extends Graph<VLabel, ELabel> {
         return true;
     }
 
-    // FILL IN
+    // FIXME?
 
 }
