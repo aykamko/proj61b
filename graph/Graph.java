@@ -83,6 +83,22 @@ public abstract class Graph<VLabel, ELabel> {
             _incoming.remove(edge);
         }
 
+        /** Removes edge EDGE from this vertex. (Convenience method for
+         *  undirected graphs.) */
+        private void removeEdge(Edge edge) {
+            _outgoing.remove(edge);
+        }
+
+        /** Returns an iterator over the outgoing edges of this vertex. */
+        private Iterator<Edge> outgoingEdges() {
+            return _outgoing.iterator();
+        }
+
+        /** Returns an iterator over the incoming edges of this vertex. */
+        private Iterator<Edge> incomingEdges() {
+            return _incoming.iterator();
+        }
+
         /** Returns the number of outgoing edges from this vertex. */
         private int outDegree() {
             return _outgoing.size();
@@ -338,14 +354,41 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns an iterator over all successors of V. */
     public Iteration<Vertex> successors(Vertex v) {
-        // FIXME
-        return null;
+        return Iteration.iteration(
+                new OtherVertexIterator(v.outgoingEdges(), v));
     }
 
     /** Returns an iterator over all predecessors of V. */
     public Iteration<Vertex> predecessors(Vertex v) {
-        return null;
-        // FIXME
+        return Iteration.iteration(
+                new OtherVertexIterator(v.incomingEdges(), v));
+    }
+
+    /** Class that iterates over the vertices on the opposite side
+     *  of the edges returned by iterator ITER from some adjacent vertex V. */
+    private class OtherVertexIterator implements Iterator<Vertex> {
+        OtherVertexIterator(Iterator<Edge> iter, Vertex v) {
+            _iter = iter;
+            _v = v;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return _iter.hasNext();
+        }
+
+        @Override
+        public Vertex next() {
+            return _iter.next().getV(_v);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("remove not supported");
+        }
+
+        private final Vertex _v;
+        private final Iterator<Edge> _iter;
     }
 
     /** Returns successors(V).  This is a synonym typically used on
@@ -361,14 +404,12 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns iterator over all outgoing edges from V. */
     public Iteration<Edge> outEdges(Vertex v) {
-        return null;
-        // FIXME
+        return Iteration.iteration(v.outgoingEdges());
     }
 
     /** Returns iterator over all incoming edges to V. */
     public Iteration<Edge> inEdges(Vertex v) {
-        return null;
-        // FIXME
+        return Iteration.iteration(v.incomingEdges());
     }
 
     /** Returns outEdges(V). This is a synonym typically used
