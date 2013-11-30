@@ -2,6 +2,14 @@ package graph;
 
 import java.util.Comparator;
 
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.HashSet;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 /** Implements a generalized traversal of a graph.  At any given time,
  *  there is a particular set of untraversed vertices---the "fringe."
  *  Traversal consists of repeatedly removing an untraversed vertex
@@ -30,7 +38,7 @@ import java.util.Comparator;
  *  RejectException to prevent a vertex from being added to the
  *  fringe, and the visit method may throw a RejectException to
  *  prevent its successors from being added to the fringe.
- *  @author
+ *  @author Aleks Kamko
  */
 public class Traversal<VLabel, ELabel> {
 
@@ -40,9 +48,45 @@ public class Traversal<VLabel, ELabel> {
      *  ORDER whose results change as a result of modifications made during the
      *  traversal is undefined. */
     public void traverse(Graph<VLabel, ELabel> G,
-                         Graph<VLabel, ELabel>.Vertex v,
+                         Graph<VLabel, ELabel>.Vertex v0,
                          Comparator<VLabel> order) {
-        // FILL IN
+        _graph = G;
+        TreeSet<Graph<VLabel, ELabel>.Vertex> fringe;
+        fringe = new TreeSet<Graph<VLabel, ELabel>.Vertex>
+                 (new VertexComparator(order));
+        fringe.add(v0);
+        _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+
+        Graph<VLabel, ELabel>.Vertex v, u;
+        Graph<VLabel, ELabel>.Edge e;
+        List<Graph<VLabel, ELabel>.Vertex> vlist;
+        List<Graph<VLabel, ELabel>.Edge> elist;
+        vlist = new ArrayList<Graph<VLabel, ELabel>.Vertex>();
+        elist = new ArrayList<Graph<VLabel, ELabel>.Edge>();
+        vlist.add(v0);
+        elist.add(null);
+        int edgeIndex;
+        while (!fringe.isEmpty()) {
+            v = fringe.pollFirst();
+            edgeIndex = vlist.indexOf(v);
+            e = elist.get(edgeIndex);
+            vlist.remove(edgeIndex);
+            elist.remove(edgeIndex);
+
+            if (!_marked.contains(v)) {
+                _marked.add(v);
+                _finalEdge = e;
+                _finalVertex = v;
+                visit(v);
+                for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
+                    elist.add(d);
+                    u = d.getV(v);
+                    vlist.add(u);
+                    preVisit(d, u);
+                    fringe.add(u);
+                }
+            }
+        }
     }
 
     /** Performs a depth-first traversal of G over all vertices
@@ -52,8 +96,41 @@ public class Traversal<VLabel, ELabel> {
      *  a node is complete, the node itself is revisited by calling
      *  the postVisit method on it. */
     public void depthFirstTraverse(Graph<VLabel, ELabel> G,
-                                   Graph<VLabel, ELabel>.Vertex v) {
-        // FILL IN
+                                   Graph<VLabel, ELabel>.Vertex v0) {
+        _graph = G;
+        LinkedList<Graph<VLabel, ELabel>.Vertex> fringe;
+        LinkedList<Graph<VLabel, ELabel>.Edge> estack;
+        fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
+        estack = new LinkedList<Graph<VLabel, ELabel>.Edge>();
+        fringe.addFirst(v0);
+        estack.addFirst(null);
+        _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+
+        Graph<VLabel, ELabel>.Vertex v, u;
+        Graph<VLabel, ELabel>.Edge e;
+        int edgeIndex;
+        while (!fringe.isEmpty()) {
+            v = fringe.pollFirst();
+            e = estack.pollFirst();
+
+            if (!_marked.contains(v)) {
+                _marked.add(v);
+                _finalVertex = v;
+                _finalEdge = e;
+                visit(v);
+                for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
+                    u = d.getV(v);
+                    _finalEdge = d;
+                    _finalVertex = u;
+                    preVisit(d, u);
+                    fringe.addFirst(u);
+                    estack.addFirst(d);
+                }
+                //FIXME?
+                _finalVertex = v;
+                postVisit(v);
+            }
+        }
     }
 
     /** Performs a breadth-first traversal of G over all vertices
@@ -63,8 +140,41 @@ public class Traversal<VLabel, ELabel> {
      *  a node is complete, the node itself is revisited by calling
      *  the postVisit method on it. */
     public void breadthFirstTraverse(Graph<VLabel, ELabel> G,
-                                     Graph<VLabel, ELabel>.Vertex v) {
-        // FILL IN
+                                     Graph<VLabel, ELabel>.Vertex v0) {
+        _graph = G;
+        LinkedList<Graph<VLabel, ELabel>.Vertex> fringe;
+        LinkedList<Graph<VLabel, ELabel>.Edge> estack;
+        fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
+        estack = new LinkedList<Graph<VLabel, ELabel>.Edge>();
+        fringe.addFirst(v0);
+        estack.addFirst(null);
+        _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+
+        Graph<VLabel, ELabel>.Vertex v, u;
+        Graph<VLabel, ELabel>.Edge e;
+        int edgeIndex;
+        while (!fringe.isEmpty()) {
+            v = fringe.pollLast();
+            e = estack.pollLast();
+
+            if (!_marked.contains(v)) {
+                _marked.add(v);
+                _finalVertex = v;
+                _finalEdge = e;
+                visit(v);
+                for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
+                    u = d.getV(v);
+                    _finalEdge = d;
+                    _finalVertex = u;
+                    preVisit(d, u);
+                    fringe.addFirst(u);
+                    estack.addFirst(d);
+                }
+                //FIXME?
+                _finalVertex = v;
+                postVisit(v);
+            }
+        }
     }
 
     /** Continue the previous traversal starting from V.
@@ -123,5 +233,26 @@ public class Traversal<VLabel, ELabel> {
     protected Graph<VLabel, ELabel>.Edge _finalEdge;
     /** The last graph traversed. */
     protected Graph<VLabel, ELabel> _graph;
+
+    /** Already visited vertices in the last traversal. */
+    private Set<Graph<VLabel, ELabel>.Vertex> _marked;
+
+    /** Comparator that orders vertices by their VLabels based on a given 
+     *  VLabel Comparator. */
+    private class VertexComparator
+            implements Comparator<Graph<VLabel, ELabel>.Vertex> {
+        VertexComparator(Comparator<VLabel> comparator) {
+            _comparator = comparator;
+        }
+
+        @Override
+        public int compare(Graph<VLabel, ELabel>.Vertex v0,
+            Graph<VLabel, ELabel>.Vertex v1) {
+            return _comparator.compare(v0.getLabel(), v1.getLabel());
+        }
+
+        /** VLabel Comparator to base order off of. */
+        private final Comparator<VLabel> _comparator;
+    }
 
 }
