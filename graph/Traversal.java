@@ -51,11 +51,16 @@ public class Traversal<VLabel, ELabel> {
                          Graph<VLabel, ELabel>.Vertex v0,
                          Comparator<VLabel> order) {
         _graph = G;
+        _lastTraversalType = TraversalTypes.GENERAL;
+        _lastOrder = order;
         TreeSet<Graph<VLabel, ELabel>.Vertex> fringe;
         fringe = new TreeSet<Graph<VLabel, ELabel>.Vertex>
                  (new VertexComparator(order));
         fringe.add(v0);
-        _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        if (!_continued) {
+            _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        }
+        _continued = false;
 
         Graph<VLabel, ELabel>.Vertex v, u;
         Graph<VLabel, ELabel>.Edge e;
@@ -98,13 +103,17 @@ public class Traversal<VLabel, ELabel> {
     public void depthFirstTraverse(Graph<VLabel, ELabel> G,
                                    Graph<VLabel, ELabel>.Vertex v0) {
         _graph = G;
+        _lastTraversalType = TraversalTypes.DEPTH;
         LinkedList<Graph<VLabel, ELabel>.Vertex> fringe;
         LinkedList<Graph<VLabel, ELabel>.Edge> estack;
         fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
         estack = new LinkedList<Graph<VLabel, ELabel>.Edge>();
         fringe.addFirst(v0);
         estack.addFirst(null);
-        _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        if (!_continued) {
+            _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        }
+        _continued = false;
 
         Graph<VLabel, ELabel>.Vertex v, u;
         Graph<VLabel, ELabel>.Edge e;
@@ -142,20 +151,24 @@ public class Traversal<VLabel, ELabel> {
     public void breadthFirstTraverse(Graph<VLabel, ELabel> G,
                                      Graph<VLabel, ELabel>.Vertex v0) {
         _graph = G;
+        _lastTraversalType = TraversalTypes.BREADTH;
         LinkedList<Graph<VLabel, ELabel>.Vertex> fringe;
-        LinkedList<Graph<VLabel, ELabel>.Edge> estack;
+        LinkedList<Graph<VLabel, ELabel>.Edge> equeue;
         fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
-        estack = new LinkedList<Graph<VLabel, ELabel>.Edge>();
+        equeue = new LinkedList<Graph<VLabel, ELabel>.Edge>();
         fringe.addFirst(v0);
-        estack.addFirst(null);
-        _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        equeue.addFirst(null);
+        if (!_continued) {
+            _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        }
+        _continued = false;
 
         Graph<VLabel, ELabel>.Vertex v, u;
         Graph<VLabel, ELabel>.Edge e;
         int edgeIndex;
         while (!fringe.isEmpty()) {
             v = fringe.pollLast();
-            e = estack.pollLast();
+            e = equeue.pollLast();
 
             if (!_marked.contains(v)) {
                 _marked.add(v);
@@ -168,7 +181,7 @@ public class Traversal<VLabel, ELabel> {
                     _finalVertex = u;
                     preVisit(d, u);
                     fringe.addFirst(u);
-                    estack.addFirst(d);
+                    equeue.addFirst(d);
                 }
                 //FIXME?
                 _finalVertex = v;
@@ -181,7 +194,20 @@ public class Traversal<VLabel, ELabel> {
      *  Continuing a traversal means that we do not traverse
      *  vertices that have been traversed previously. */
     public void continueTraversing(Graph<VLabel, ELabel>.Vertex v) {
-        // FILL IN
+        _continued = true;
+        switch (_lastTraversalType) {
+            case GENERAL:
+                traverse(theGraph(), v, _lastOrder);
+                break;
+            case DEPTH:
+                depthFirstTraverse(theGraph(), v);
+                break;
+            case BREADTH:
+                breadthFirstTraverse(theGraph(), v);
+                break;
+            default:
+                _continued = false;
+        }
     }
 
     /** If the traversal ends prematurely, returns the Vertex argument to
@@ -236,6 +262,16 @@ public class Traversal<VLabel, ELabel> {
 
     /** Already visited vertices in the last traversal. */
     private Set<Graph<VLabel, ELabel>.Vertex> _marked;
+    /** Type of last traversal. */
+    private TraversalTypes _lastTraversalType;
+    /** Order of last general traversal. */
+    private Comparator<VLabel> _lastOrder;
+    /** Types of traversals. */
+    private enum TraversalTypes {
+        GENERAL, DEPTH, BREADTH;
+    }
+    /** Flag for continued traversal. (false by default.) */
+    private boolean _continued = false;
 
     /** Comparator that orders vertices by their VLabels based on a given 
      *  VLabel Comparator. */
