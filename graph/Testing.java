@@ -40,7 +40,7 @@ public class Testing {
         g.add(5);
         assertEquals("Graph did not add vertex", 1, g.vertexSize());
         assertEquals("Graph has edges", 0, g.edgeSize());
-        
+
         List<Graph.Vertex> vertices = new ArrayList<Graph.Vertex>();
         for (Graph.Vertex v : g.vertices()) {
             vertices.add(v);
@@ -82,7 +82,7 @@ public class Testing {
         UndirectedGraph<Integer, Integer> g =
             new UndirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Graph<Integer, Integer>.Vertex> vlist = 
+        List<Graph<Integer, Integer>.Vertex> vlist =
             new ArrayList<Graph<Integer, Integer>.Vertex>();
         for (int i = 0; i < vLabels.length; i += 1) {
             vlist.add(g.add(vLabels[i]));
@@ -116,7 +116,7 @@ public class Testing {
         DirectedGraph<Integer, Integer> g =
             new DirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Graph<Integer, Integer>.Vertex> vlist = 
+        List<Graph<Integer, Integer>.Vertex> vlist =
             new ArrayList<Graph<Integer, Integer>.Vertex>();
         for (int i = 0; i < vLabels.length; i += 1) {
             vlist.add(g.add(vLabels[i]));
@@ -154,7 +154,7 @@ public class Testing {
         UndirectedGraph<Integer, Integer> g =
             new UndirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Graph<Integer, Integer>.Vertex> vlist = 
+        List<Graph<Integer, Integer>.Vertex> vlist =
             new ArrayList<Graph<Integer, Integer>.Vertex>();
         for (int i = 0; i < vLabels.length; i += 1) {
             vlist.add(g.add(vLabels[i]));
@@ -184,7 +184,7 @@ public class Testing {
         UndirectedGraph<Integer, Integer> g =
             new UndirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2 };
-        List<Graph<Integer, Integer>.Vertex> vlist = 
+        List<Graph<Integer, Integer>.Vertex> vlist =
             new ArrayList<Graph<Integer, Integer>.Vertex>();
         for (int i = 0; i < vLabels.length; i += 1) {
             vlist.add(g.add(vLabels[i]));
@@ -221,14 +221,14 @@ public class Testing {
         DirectedGraph<Integer, Integer> g =
             new DirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Graph<Integer, Integer>.Vertex> vlist = 
+        List<Graph<Integer, Integer>.Vertex> vlist =
             new ArrayList<Graph<Integer, Integer>.Vertex>();
         for (int i = 0; i < vLabels.length; i += 1) {
             vlist.add(g.add(vLabels[i]));
         }
 
         Integer[] eLabels = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        List<Graph<Integer, Integer>.Edge> elist = 
+        List<Graph<Integer, Integer>.Edge> elist =
             new ArrayList<Graph<Integer, Integer>.Edge>();
         for (int i = 0; i < eLabels.length; i += 1) {
             elist.add(g.add(vlist.get(0), vlist.get(i), eLabels[i]));
@@ -249,8 +249,8 @@ public class Testing {
     }
 
     @SafeVarargs
-    private static <VLabel, ELabel> 
-        List<Graph<VLabel, ELabel>.Edge> constructEdgeList(
+    private static <VLabel, ELabel>
+    List<Graph<VLabel, ELabel>.Edge> constructEdgeList(
                 Graph<VLabel, ELabel>.Edge... edges) {
 
         List<Graph<VLabel, ELabel>.Edge> result =
