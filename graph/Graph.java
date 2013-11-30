@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import java.util.Set;
+import java.util.HashSet;
+
 import java.util.Iterator;
 
 /* Do not add or remove public or protected members, or modify the signatures of
@@ -128,33 +131,20 @@ public abstract class Graph<VLabel, ELabel> {
             return false;
         }
 
+        /** Returns true iff this Vertex contains an outgoing edge
+         *  with label LABEL with V as its opposite vertex. */
+        private boolean containsEdgeToWithLabel(Vertex v, ELabel label) {
+            for (Edge e : _outgoing) {
+                if (e.getV(this) == v && e.getLabel().equals(label)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         @Override
         public String toString() {
             return String.valueOf(_label);
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public boolean equals(Object obj) {
-            if (obj instanceof Graph.Vertex) {
-                Vertex compare = (Vertex) obj;
-                return this.getLabel().equals(compare.getLabel());
-                // FIXME
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 0;
-            for (Edge e : _incoming) {
-                hash += HASH_CONST * e.hashCode();
-            }
-            for (Edge e : _outgoing) {
-                hash += (int) Math.pow(HASH_CONST, 2) * e.hashCode();
-            }
-            return this.getLabel().hashCode() + hash;
         }
 
         /** The label on this vertex. */
@@ -208,26 +198,6 @@ public abstract class Graph<VLabel, ELabel> {
         @Override
         public String toString() {
             return String.format("(%s,%s):%s", _v0, _v1, _label);
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public boolean equals(Object obj) {
-            if (obj instanceof Graph.Edge) {
-                Edge compare = (Edge) obj;
-                return this.getV0().equals(compare.getV0())
-                    && this.getV1().equals(compare.getV1())
-                    && this.getLabel().equals(compare.getLabel());
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return this.getV0().hashCode()
-                 + (HASH_CONST * this.getV1().hashCode())
-                 + ((int)Math.pow(HASH_CONST, 2) * this.getLabel().hashCode());
         }
 
         /** Endpoints of this edge.  In directed edges, this edge exits _V0
@@ -289,23 +259,7 @@ public abstract class Graph<VLabel, ELabel> {
     /** Returns true iff there is an edge (U, V) in me with label LABEL. */
     public boolean contains(Vertex u, Vertex v,
                             ELabel label) {
-        LinkedList<Edge> elist = _edges.get(label);
-        if (elist != null) {
-            if (isDirected()) {
-                for (Edge e : elist) {
-                    if (e.getV0() == u && e.getV1() == v) {
-                        return true;
-                    }
-                }
-            } else {
-                for (Edge e : elist) {
-                    if (e.getV(u) == v) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return u.containsEdgeToWithLabel(v, label);
     }
 
     /** Returns a new vertex labeled LABEL, and adds it to me with no
@@ -361,17 +315,21 @@ public abstract class Graph<VLabel, ELabel> {
     /** Remove V and all adjacent edges, if present. */
     public void remove(Vertex v) {
         Vertex other;
+        Set<Edge> elist = new HashSet<Edge>();
         if (isDirected()) {
             for (Edge e : outEdges(v)) {
-                remove(e);
+                elist.add(e);
             }
             for (Edge e : inEdges(v)) {
-                remove(e);
+                elist.add(e);
             }
         } else {
             for (Edge e : edges(v)) {
-                remove(e);
+                elist.add(e);
             }
+        }
+        for (Edge e : elist) {
+            remove(e);
         }
         _vertexLabels.remove(v.getLabel());
         LinkedList<Vertex> vlist = _vertices.get(v.getLabel());
@@ -398,10 +356,14 @@ public abstract class Graph<VLabel, ELabel> {
     /** Remove all edges from V1 to V2 from me, if present.  The result is
      *  undefined if V1 and V2 are not among my vertices.  */
     public void remove(Vertex v1, Vertex v2) {
+        Set<Edge> elist = new HashSet<Edge>();
         for (Edge e : outEdges(v1)) {
             if (e.getV(v1) == v2) {
-                remove(e);
+                elist.add(e);
             }
+        }
+        for (Edge e : elist) {
+            remove(e);
         }
     }
 
@@ -477,12 +439,13 @@ public abstract class Graph<VLabel, ELabel> {
     /** Iterates over the values in VALUEMAP using the order of the keys
      *  in KEYLIST. */
     private static class ValueIterator<Key, Value> implements Iterator<Value> {
-        ValueIterator(ArrayList<Key> keyList,
-                HashMap<Key, LinkedList<Value>> valueMap) {
+        ValueIterator(List<Key> keyList,
+                Map<Key, LinkedList<Value>> valueMap) {
             _keyList = keyList;
             _valueMap = valueMap;
             _keyIter = _keyList.iterator();
             _valueIter = null;
+            _lastKey = null;
         }
 
         @Override
@@ -497,9 +460,12 @@ public abstract class Graph<VLabel, ELabel> {
         public Value next() {
             if ((_valueIter == null || !_valueIter.hasNext())
                     && _keyIter.hasNext()) {
-                _valueIter = _valueMap.get(_keyIter.next()).iterator();
-            } else {
-                throw new NoSuchElementException();
+                Key newKey = null;
+                do {
+                    newKey = _keyIter.next();
+                } while (_lastKey != null && _lastKey.equals(newKey));
+                _lastKey = newKey;
+                _valueIter = _valueMap.get(_lastKey).iterator();
             }
             return _valueIter.next();
         }
@@ -509,10 +475,11 @@ public abstract class Graph<VLabel, ELabel> {
             throw new UnsupportedOperationException("remove not supported");
         }
 
+        private Key _lastKey;
         private Iterator<Value> _valueIter;
         private final Iterator<Key> _keyIter;
-        private final ArrayList<Key> _keyList;
-        private final HashMap<Key, LinkedList<Value>> _valueMap;
+        private final List<Key> _keyList;
+        private final Map<Key, LinkedList<Value>> _valueMap;
     }
 
 
@@ -544,14 +511,14 @@ public abstract class Graph<VLabel, ELabel> {
     }
 
     /** Labels for edges in a graph. */
-    private ArrayList<ELabel> _edgeLabels;
+    private List<ELabel> _edgeLabels;
     /** Labels for vertices in a graph. */
-    private ArrayList<VLabel> _vertexLabels;
+    private List<VLabel> _vertexLabels;
 
     /** Edges in this graph. */
-    private HashMap<ELabel, LinkedList<Edge>> _edges;
+    private Map<ELabel, LinkedList<Edge>> _edges;
     /** Vertices in this graph. */
-    private HashMap<VLabel, LinkedList<Vertex>> _vertices;
+    private Map<VLabel, LinkedList<Vertex>> _vertices;
 
     /** Number of vertices in this graph. */
     private int _vertNum;
