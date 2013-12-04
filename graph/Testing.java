@@ -17,13 +17,14 @@ import java.util.Comparator;
  * possible to remove them and still have your package work). */
 
 /** Unit tests for the graph package.
- *  @author
+ *  @author Aleks Kamko
  */
 public class Testing {
 
     /** Run all JUnit tests in the graph package. */
     public static void main(String[] ignored) {
-        System.exit(textui.runClasses(graph.Testing.class));
+        System.exit(textui.runClasses(graph.Testing.class,
+                                      graph.GraphsTesting.class));
     }
 
     @Test

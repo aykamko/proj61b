@@ -1,9 +1,9 @@
 package graph;
 
+import java.util.Comparator;
+
 import java.util.List;
 import java.util.LinkedList;
-
-import java.util.Comparator;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -109,7 +109,7 @@ public final class Graphs {
 
         LinkedList<Graph<VLabel, ELabel>.Edge> path =
             new LinkedList<Graph<VLabel, ELabel>.Edge>();
-        Traversal<VLabel, ELabel> astar =
+        Traversal<VLabel, ELabel> astarweighted =
             new AStarTraversalWeightableLabels<VLabel, ELabel>(V1, h, path);
 
         Comparator<VLabel> weightOrder = new Comparator<VLabel>() {
@@ -126,7 +126,7 @@ public final class Graphs {
         };
 
         try {
-            astar.traverse(G, V0, weightOrder);
+            astarweighted.traverse(G, V0, weightOrder);
         } catch (StopException e) {
             return path;
         }
@@ -192,7 +192,7 @@ public final class Graphs {
             }
         }
 
-        /** Reads weight of VLabel V. */
+        /** Returns a Double that represents the weight of VLabel V. */
         protected Double getVLabelWeight(VLabel v) {
             return _vweighter.weight(v);
         }
@@ -202,7 +202,7 @@ public final class Graphs {
             _vweighter.setWeight(v, w);
         }
 
-        /** Reads weight of Vertex e. */
+        /** Returns a Double that represents the weight of ELabel E. */
         protected Double getELabelWeight(ELabel e) {
             return _eweighter.weight(e);
         }
@@ -226,10 +226,9 @@ public final class Graphs {
     }
 
 
-    /** Subclass of Traversal that uses the A* algorithm as its general
-     *  traversal. Vertices and Edges must extends Weightable and Weighted,
-     *  respectively. Weights are set and read using inherited methods from
-     *  the previously mentioned classes. */
+    /** Subclass of AStarGeneralTraversal that necessitates that Vertices and
+     *  Edges extend Weightable and Weighted, respectively. Weights are set and
+     *  read using inherited methods from the previously mentioned classes. */
     private static class
     AStarTraversalWeightableLabels
         <VLabel extends Weightable, ELabel extends Weighted>
