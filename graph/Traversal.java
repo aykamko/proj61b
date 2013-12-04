@@ -56,6 +56,7 @@ public class Traversal<VLabel, ELabel> {
         TreeSet<Graph<VLabel, ELabel>.Vertex> fringe;
         fringe = new TreeSet<Graph<VLabel, ELabel>.Vertex>
                  (new VertexComparator(order));
+        preVisit(null, v0);
         fringe.add(v0);
         if (!_continued) {
             _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
@@ -108,6 +109,7 @@ public class Traversal<VLabel, ELabel> {
         LinkedList<Graph<VLabel, ELabel>.Edge> estack;
         fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
         estack = new LinkedList<Graph<VLabel, ELabel>.Edge>();
+        preVisit(null, v0);
         fringe.addFirst(v0);
         estack.addFirst(null);
         if (!_continued) {
@@ -156,6 +158,7 @@ public class Traversal<VLabel, ELabel> {
         LinkedList<Graph<VLabel, ELabel>.Edge> equeue;
         fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
         equeue = new LinkedList<Graph<VLabel, ELabel>.Edge>();
+        preVisit(null, v0);
         fringe.addFirst(v0);
         equeue.addFirst(null);
         if (!_continued) {
