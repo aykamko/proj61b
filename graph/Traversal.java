@@ -118,7 +118,6 @@ public class Traversal<VLabel, ELabel> {
 
         Graph<VLabel, ELabel>.Vertex v, u;
         Graph<VLabel, ELabel>.Edge e;
-        int edgeIndex;
         while (!fringe.isEmpty()) {
             v = fringe.pollFirst();
             e = estack.pollFirst();
@@ -129,13 +128,13 @@ public class Traversal<VLabel, ELabel> {
                 _finalEdge = e;
                 visit(v);
                 fringe.addFirst(v);
-                fringe.addFirst(null);
+                estack.addFirst(null);
                 for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
                     u = d.getV(v);
-                    if (!_marked.contains(u)) {
                         _finalEdge = d;
                         _finalVertex = u;
                         preVisit(d, u);
+                    if (!_marked.contains(u)) {
                         fringe.addFirst(u);
                         estack.addFirst(d);
                     }
@@ -172,7 +171,6 @@ public class Traversal<VLabel, ELabel> {
 
         Graph<VLabel, ELabel>.Vertex v, u;
         Graph<VLabel, ELabel>.Edge e;
-        int edgeIndex;
         while (!fringe.isEmpty()) {
             v = fringe.pollLast();
             e = equeue.pollLast();
@@ -184,10 +182,10 @@ public class Traversal<VLabel, ELabel> {
                 visit(v);
                 for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
                     u = d.getV(v);
-                    if (!_marked.contains(u)) {
                         _finalEdge = d;
                         _finalVertex = u;
                         preVisit(d, u);
+                    if (!_marked.contains(u)) {
                         fringe.addFirst(u);
                         equeue.addFirst(d);
                     }

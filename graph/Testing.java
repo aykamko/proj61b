@@ -24,7 +24,8 @@ public class Testing {
     /** Run all JUnit tests in the graph package. */
     public static void main(String[] ignored) {
         System.exit(textui.runClasses(graph.Testing.class,
-                                      graph.GraphsTesting.class));
+                                      graph.GraphsTesting.class,
+                                      graph.TraversalTesting.class));
     }
 
     @Test

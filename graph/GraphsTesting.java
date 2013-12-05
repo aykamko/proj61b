@@ -11,11 +11,6 @@ import java.util.Arrays;
 
 import java.util.Comparator;
 
-/* You MAY add public @Test methods to this class.  You may also add
- * additional public classes containing "Testing" in their name. These
- * may not be part of your graph package per se (that is, it must be
- * possible to remove them and still have your package work). */
-
 /** Unit tests for the Graphs.java (A* Traversal).
  *  @author Aleks Kamko
  */
