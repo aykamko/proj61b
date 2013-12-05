@@ -56,6 +56,8 @@ public class GraphsTesting {
             g.add(new WeightablePlace('I', 8, 15));
         Graph<WeightablePlace, WeightedPath>.Vertex vJ =
             g.add(new WeightablePlace('J', 11, 12));
+        Graph<WeightablePlace, WeightedPath>.Vertex vK =
+            g.add(new WeightablePlace('K', 12, 8));
 
         Graph<WeightablePlace, WeightedPath>.Edge eA =
             addDistancedPath(g, d, vA, vB, 'A');
@@ -79,10 +81,16 @@ public class GraphsTesting {
             addDistancedPath(g, d, vI, vG, 'J');
         Graph<WeightablePlace, WeightedPath>.Edge eK =
             addDistancedPath(g, d, vI, vF, 'K');
+        Graph<WeightablePlace, WeightedPath>.Edge eL =
+            addDistancedPath(g, d, vG, vK, 'L');
 
         List<Graph<WeightablePlace, WeightedPath>.Edge> path =
             Graphs.<WeightablePlace, WeightedPath>
             shortestPath(g, vA, vE, d);
+        assertTrue("incorrect: A*", path == null);
+
+        path = Graphs.<WeightablePlace, WeightedPath>
+            shortestPath(g, vA, vD, d);
         assertTrue("incorrect: A*", path == null);
 
         path = Graphs.<WeightablePlace, WeightedPath>
@@ -91,6 +99,15 @@ public class GraphsTesting {
             Arrays.asList(eF, eG, eI);
         assertArrayEquals("incorrect: A*", compare.toArray(), path.toArray());
 
+        path = Graphs.<WeightablePlace, WeightedPath>
+            shortestPath(g, vA, vF, d);
+        compare = Arrays.asList(eF, eG, eI, eK);
+        assertArrayEquals("incorrect: A*", compare.toArray(), path.toArray());
+
+        path = Graphs.<WeightablePlace, WeightedPath>
+            shortestPath(g, vA, vK, d);
+        compare = Arrays.asList(eB, eE, eL);
+        assertArrayEquals("incorrect: A*", compare.toArray(), path.toArray());
     }
 
     /** Adds an edge between V0 and V1 in graph G designated by Character C 
