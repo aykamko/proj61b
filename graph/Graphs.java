@@ -128,9 +128,11 @@ public final class Graphs {
         try {
             astarweighted.traverse(G, V0, weightOrder);
         } catch (StopException e) {
+            System.out.println();
             return path;
         }
 
+        System.out.println();
         return null;
     }
 
