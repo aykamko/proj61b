@@ -132,7 +132,7 @@ public class Traversal<VLabel, ELabel> {
                 fringe.addFirst(null);
                 for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
                     u = d.getV(v);
-                    if (!_processed.contains(u)) {
+                    if (!_marked.contains(u)) {
                         _finalEdge = d;
                         _finalVertex = u;
                         preVisit(d, u);
@@ -140,7 +140,7 @@ public class Traversal<VLabel, ELabel> {
                         estack.addFirst(d);
                     }
                 }
-            } else {
+            } else if (!_processed.contains(v)) {
                 _finalVertex = v;
                 postVisit(v);
                 _processed.add(v);
@@ -184,7 +184,7 @@ public class Traversal<VLabel, ELabel> {
                 visit(v);
                 for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
                     u = d.getV(v);
-                    if (!_processed.contains(u)) {
+                    if (!_marked.contains(u)) {
                         _finalEdge = d;
                         _finalVertex = u;
                         preVisit(d, u);
@@ -194,7 +194,7 @@ public class Traversal<VLabel, ELabel> {
                 }
                 fringe.addFirst(v);
                 equeue.addFirst(null);
-            } else {
+            } else if (!_processed.contains(v)) {
                 _finalVertex = v;
                 postVisit(v);
                 _processed.add(v);
@@ -298,7 +298,8 @@ public class Traversal<VLabel, ELabel> {
         @Override
         public int compare(Graph<VLabel, ELabel>.Vertex v0,
             Graph<VLabel, ELabel>.Vertex v1) {
-            return _comparator.compare(v0.getLabel(), v1.getLabel());
+            int value = _comparator.compare(v0.getLabel(), v1.getLabel());
+            return value;
         }
 
         /** VLabel Comparator to base order off of. */

@@ -54,13 +54,12 @@ public final class Graphs {
         Comparator<VLabel> weightOrder = new Comparator<VLabel>() {
             @Override
             public int compare(VLabel l0, VLabel l1) {
-                Double l0CrowDist = h.dist(l0, V1.getLabel());
-                Double l1CrowDist = h.dist(l1, V1.getLabel());
-                Double l0Weight = vweighter.weight(l0);
-                Double l1Weight = vweighter.weight(l1);
+                Double l0Weight = h.dist(l0, V1.getLabel())
+                    + vweighter.weight(l0);
+                Double l1Weight = h.dist(l1, V1.getLabel())
+                    + vweighter.weight(l1);
 
-                return (int) Math.round((l0Weight + l0CrowDist)
-                        - (l1Weight + l1CrowDist));
+                return Double.compare(l0Weight, l1Weight);
             }
         };
 
@@ -115,13 +114,12 @@ public final class Graphs {
         Comparator<VLabel> weightOrder = new Comparator<VLabel>() {
             @Override
             public int compare(VLabel l0, VLabel l1) {
-                Double l0CrowDist = h.dist(l0, V1.getLabel());
-                Double l1CrowDist = h.dist(l1, V1.getLabel());
-                Double l0Weight = l0.weight();
-                Double l1Weight = l1.weight();
+                Double l0Weight = h.dist(l0, V1.getLabel())
+                    + l0.weight();
+                Double l1Weight = h.dist(l1, V1.getLabel())
+                    + l1.weight();
 
-                return (int) Math.round((l0Weight + l0CrowDist)
-                        - (l1Weight + l1CrowDist));
+                return Double.compare(l0Weight, l1Weight);
             }
         };
 
