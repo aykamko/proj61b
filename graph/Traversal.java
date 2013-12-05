@@ -73,7 +73,6 @@ public class Traversal<VLabel, ELabel> {
         int edgeIndex;
         while (!fringe.isEmpty()) {
             v = fringe.pollFirst();
-            System.out.println(v);
             edgeIndex = vlist.indexOf(v);
             e = elist.get(edgeIndex);
             vlist.remove(edgeIndex);
