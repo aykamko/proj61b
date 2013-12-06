@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class TraversalTesting {
 
     @Test
-    public void depthFirstDirected() {
+    public void depthFirstDirected1() {
         DirectedGraph<Character, String> g =
             new DirectedGraph<Character, String>();
 
@@ -49,7 +49,38 @@ public class TraversalTesting {
     }
 
     @Test
-    public void depthFirstUndirected() {
+    public void depthFirstDirected2() {
+        DirectedGraph<Character, String> g =
+            new DirectedGraph<Character, String>();
+
+        LinkedList<String> visitList = new LinkedList<String>();
+        Traversal<Character, String> markTraversal =
+            new MarkTraversal(visitList);
+
+        Graph<Character, String>.Vertex vA = g.add('A');
+        Graph<Character, String>.Vertex vB = g.add('B');
+        Graph<Character, String>.Vertex vC = g.add('C');
+        Graph<Character, String>.Vertex vD = g.add('D');
+        Graph<Character, String>.Vertex vE = g.add('E');
+        Graph<Character, String>.Vertex vF = g.add('F');
+
+        addEdge(g, vA, vB, "AB");
+        addEdge(g, vA, vC, "AC");
+        addEdge(g, vA, vD, "AD");
+        addEdge(g, vD, vE, "DE");
+        addEdge(g, vD, vF, "DF");
+
+        markTraversal.depthFirstTraverse(g, vA);
+
+        assertArrayEquals("Incorrect: depth-first",
+                new String[] { "bA", "aB", "aC", "aD", "bD", "aE", "aF", "bF",
+                               "cF", "bE", "cE", "cD", "bC", "cC", "bB", "cB",
+                               "cA" },
+                visitList.toArray());
+    }
+
+    @Test
+    public void depthFirstUndirected1() {
         UndirectedGraph<Character, String> g =
             new UndirectedGraph<Character, String>();
 
@@ -83,6 +114,7 @@ public class TraversalTesting {
                               "aD", "cC", "cB", "cD", "cE", "cA" },
                 visitList.toArray());
     }
+
 
     @Test
     public void breadthFirstDirected() {

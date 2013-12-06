@@ -3,6 +3,7 @@ package make;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Map;
 import java.util.HashMap;
 
 import java.util.regex.Pattern;
@@ -17,7 +18,7 @@ import java.util.NoSuchElementException;
 import java.io.File;
 
 /** Initial class for the 'make' program.
- *  @author
+ *  @author Aleks Kamko
  */
 public final class Main {
 
@@ -65,6 +66,11 @@ public final class Main {
             targets.add(args[a]);
         }
 
+        //TODO: remove print statement
+        for (String s : targets) {
+            System.out.println(s);
+        }
+ 
         make(makefileName, fileInfoName, targets);
     }
 
@@ -75,61 +81,93 @@ public final class Main {
      */
     private static void make(String makefileName, String fileInfoName,
                              List<String> targets) {
+        Map<String, Integer> changeMap = new HashMap<String, Integer>();
+        List<Rule> ruleList = new ArrayList<Rule>();
+
         try {
-            readFileInfoFile(new File(fileInfoName));
-            readMakeFile(new File(makefileName));
+            readFileInfoFile(new File(fileInfoName), changeMap);
+            readMakeFile(new File(makefileName), ruleList);
         } catch (IOException | IllegalArgumentException
                 | NoSuchElementException e) {
             usage();
         }
 
-        //TODO: other stuff
+        if (targets.isEmpty()) {
+            targets.add(ruleList.get(0).target());
+        }
+
+        TargetBuilder builder = 
+            new TargetBuilder(ruleList, changeMap, targets);
+        try {
+            builder.buildTargets();
+        } catch (MakeException e) {
+            reportError(e.getMessage());
+            System.exit(1);
+        }
+
+        //TODO: remove print statements
+        for (Map.Entry<String, Integer> e : changeMap.entrySet()) {
+            System.out.println(e);
+        }
+        for (Rule r : ruleList) {
+            System.out.println(r);
+        }
+
     }
 
-    /** Reads the infoFile file and stores the current time and changetime for
-     *  each name. Throws an exception if the file does not exist or if there 
-     *  is some format error. */
-    private static void readFileInfoFile(File infoFile)
+    /** Reads the INFOFILE file and stores the current time and changetime for
+     *  each name in the CHANGEDATES Map. Throws an exception if the file does
+     *  not exist or if there is some format error. */
+    private static int readFileInfoFile(File infoFile, 
+            Map<String, Integer> changeMap)
         throws IOException, IllegalArgumentException, NoSuchElementException {
-        Scanner scanner = new Scanner(infoFile);
+        _scn = new Scanner(infoFile);
 
-        Matcher m = CURTIME_REGEX.matcher(scanner.nextLine());
+        int lastBuildTime = 0;
+
+        Matcher m = CURTIME_REGEX.matcher(_scn.nextLine());
         if (m.matches()) {
-            _curTime = Integer.parseInt(m.group(1));
+            lastBuildTime = Integer.parseInt(m.group(1));
         } else {
             throw new IllegalArgumentException();
         }
 
-        _nameChangeMap = new HashMap<String, Integer>();
-        String mapping, name, changeDate;
-        while (scanner.hasNextLine()) {
-            mapping = scanner.nextLine();
+        String mapping, name;
+        Integer changeDate;
+        while (_scn.hasNextLine()) {
+            mapping = _scn.nextLine();
             m = NAMECHANGE_REGEX.matcher(mapping);
             if (m.matches()) {
                 name = m.group(1);
-                changeDate = m.group(2);
-                _nameChangeMap.put(name, Integer.valueOf(changeDate));
+                changeDate = Integer.valueOf(m.group(2));
+                if (changeDate >= lastBuildTime) {
+                    throw new IllegalArgumentException();
+                }
+                changeMap.put(name, changeDate);
             } else {
                 throw new IllegalArgumentException();
             }
         }
 
-        scanner.close();
+        _scn.close();
+        return lastBuildTime;
     }
 
-    /** Reads the MAKEFILE and stores each rule as a Rule object. Throws an
-     *  exception if the file does not exist or if there is some format 
-     *  error. */
-    private static void readMakeFile(File makeFile)
+    /** Reads the MAKEFILE and stores each rule as a Rule object in RULELIST. 
+     *  Throws an exception if the file does not exist or if there is some 
+     *  format error. */
+    private static void readMakeFile(File makeFile, List<Rule> ruleList)
         throws IOException, IllegalArgumentException {
-        Scanner scanner = new Scanner(makeFile);
-        _ruleList = new ArrayList<Rule>();
+        _scn = new Scanner(makeFile);
 
         Rule rule = null;
         while (true) {
-            if (scanner.findWithinHorizon(MAKEFILE_REGEX, 0) != null) {
-                MatchResult m = scanner.match();
+            if (_scn.findWithinHorizon(MAKEFILE_REGEX, 0) != null) {
+                MatchResult m = _scn.match();
                 if (m.end(TARGET_TOKEN) > -1) {
+                    if (rule != null) {
+                        ruleList.add(rule);
+                    }
                     rule = new Rule(m.group(TARGET_TOKEN));
                 } else if (m.end(PREREQ_TOKEN) > -1) {
                     if (rule != null) {
@@ -139,14 +177,14 @@ public final class Main {
                     }
                 } else if (m.end(ERROR_TOKEN) > -1) {
                     throw new IllegalArgumentException();
-                } else {
-                    if (rule != null) {
-                        _ruleList.add(rule);
-                        rule = null;
-                    }
+                } else if (m.end(IGNORE_TOKEN) == -1) {
+                    //FIXME?
                 }
             } else {
-                scanner.close();
+                if (rule != null) {
+                    ruleList.add(rule);
+                }
+                _scn.close();
                 break;
             }
         }
@@ -154,16 +192,19 @@ public final class Main {
 
     /** Print a brief usage message and exit program abnormally. */
     private static void usage() {
-        // FILL THIS IN
+        System.err.println("USAGE");
         System.exit(1);
     }
 
-    /** Current time of fileInfo file. */
-    private static int _curTime;
-    /** Mappings from NAME to CHANGEDATE. */
-    private static HashMap<String, Integer> _nameChangeMap;
-    /** List of Rules from the MAKEFILE. */
-    private static List<Rule> _ruleList;
+    /** Prints an error to System.err. Format is the same as printf:
+     *  ERROR is the format string, and ARGS are its arguments. */
+    private static void reportError(String error, Object... args) {
+        System.err.printf(error, args);
+        System.out.println();
+    }
+
+    /** Scanner for input files. */
+    private static Scanner _scn;
 
     /** Regex to match current time at the first line of a fileInfo file. */
     private static final Pattern CURTIME_REGEX = 
@@ -174,20 +215,20 @@ public final class Main {
 
     /** Regex to read a MAKEFILE. */
     private static final Pattern MAKEFILE_REGEX =
-        Pattern.compile("(?s)(\\p{Blank}+)"
-                      + "|(\\r?\\n((?:\\r?\\n)+)?)"
-                      + "|(#[^\\n]*?\\n)"
-                      + "|([^:=#\\\\]:)"
-                      + "|([^:=#\\\\])"
-                      + "|(.)");
+        Pattern.compile("(?m)((?::)?(?:\\s+|(?:#.*)$))"
+                     + "|([^:=#\\s\\\\]+(?=:))"
+                     + "|([^:=#\\s\\\\]+(?!:))"
+                     + "|(.)");
 
     /** Tokens that are matched in a makefile. */
     private static final int
+        /** Token for blanks, newlines, or comments. */
+        IGNORE_TOKEN = 1,
         /** A target from a Rule. */
-        TARGET_TOKEN = 4,
+        TARGET_TOKEN = 2,
         /** A prerequisite for a target. */
-        PREREQ_TOKEN = 5,
+        PREREQ_TOKEN = 3,
         /** A character that shouldn't be there. */
-        ERROR_TOKEN = 6;
+        ERROR_TOKEN = 4;
 
 }
