@@ -15,14 +15,15 @@ import graph.DirectedGraph;
 import graph.NoLabel;
 import graph.Traversal;
 
-/** Class that builds targets for the 'make' program.
+/** Class that builds targets for the 'make' program and updates targets'
+ *  changedate.
  *  @author Aleks Kamko
  */
 public class TargetBuilder {
 
     /** Constructor for TargetBuilder. RULELIST is a list of rules to build
      *  TARGETLIST with. CHANGEMAP maps objects to their last build times. */
-    TargetBuilder(List<Rule> ruleList, Map<String, Integer> changeMap,
+    TargetBuilder(List<Rule> ruleList, Map<String, Long> changeMap,
             List<String> targetList) {
         _ruleList = ruleList;
         _changeMap = changeMap;
@@ -31,15 +32,62 @@ public class TargetBuilder {
 
     /** Builds this TargetBuilder's targets. */
     public void buildTargets() {
-        checkTargets();
         constructGraph();
-        List<String> topSorted = topologicalSort(_depGraph);
+        _sortedTargets = topologicalSort(_depGraph);
 
-        System.out.println();
-        System.out.println(topSorted);
-        System.out.println();
+        for (String target : _targetList) {
+            buildTarget(target, true);
+        }
+        
+    }
 
-        //TODO: easy stuff :)
+    private void buildTarget(String target, boolean forceBuild) {
+        Rule rule = ruleForTarget(target);
+        Long age = _changeMap.get(target);
+        if (rule == null) {
+            if (age == null) {
+                String error = String.format(
+                        "target '%s' does not exist", target);
+                throw new MakeException(error);
+            } else {
+                return;
+            }
+        }
+
+        boolean build = forceBuild;
+        if (age == null) {
+            build = true;
+        }
+
+        Long prereqAge;
+        for (String prereq : rule.prereqSet()) {
+            buildTarget(prereq, false);
+            prereqAge = _changeMap.get(prereq);
+            if (prereqAge != null && prereqAge > age) {
+                build = true;
+            }
+        }
+
+        if (build) {
+            for (String cmnd : rule.commandSet()) {
+                //FIXME?
+                System.out.println(cmnd);
+            }
+            _changeMap.put(target, System.currentTimeMillis() / 1000L);
+        }
+    }
+
+    /** Returns the Rule associated with the target, or null if no rule
+     *  exists. */
+    private Rule ruleForTarget(String target) {
+        Rule result = null;
+        for (Rule r: _ruleList) {
+            if (r.target().equals(target)) {
+                result = r;
+                break;
+            }
+        }
+        return result;
     }
 
     /** Checks that all targets exist. Throws a MakeException otherwise. */
@@ -195,12 +243,13 @@ public class TargetBuilder {
     /** Dependency graph with vertices representing targets and directed edges
      *  representing dependencies. */
     private DirectedGraph<InCountLabel, NoLabel> _depGraph;
-    /** List of vertices to start traversal on. */
-    private List<Graph<InCountLabel, NoLabel>.Vertex> _startVertices;
+    /** List of targets in topologically sorted dependency order. */
+    private List<String> _sortedTargets;
     /** List of targets to build. */
     private final List<String> _targetList;
     /** List of rules to build targets with. */
     private final List<Rule> _ruleList;
     /** Maps objects (targets) to last build time. */
-    private final Map<String, Integer> _changeMap;
+    private final Map<String, Long> _changeMap;
+
 }

@@ -6,6 +6,7 @@ import java.util.Collections;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.LinkedList;
 
 import java.util.Set;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 import java.util.Iterator;
 
@@ -53,8 +55,10 @@ public abstract class Graph<VLabel, ELabel> {
         /** A new vertex with LABEL as the value of getLabel(). */
         Vertex(VLabel label) {
             _label = label;
-            _outgoing = new ArrayList<Edge>();
-            _incoming = new ArrayList<Edge>();
+            _outgoing = new LinkedHashMap<Vertex, LinkedList<Edge>>();
+            _incoming = new LinkedHashMap<Vertex, LinkedList<Edge>>();
+            _incomingNum = 0;
+            _outgoingNum = 0;
         }
 
         /** Returns the label on this vertex. */
@@ -62,79 +66,111 @@ public abstract class Graph<VLabel, ELabel> {
             return _label;
         }
 
-        /** Adds an outgoing edge from this vertex. */
+        /** Adds an outgoing edge EDGE from this vertex. */
         private void addOutgoingEdge(Edge edge) {
-            _outgoing.add(edge);
+            if (addEdgeToMap(edge, _outgoing)) {
+                _outgoingNum += 1;
+            }
         }
 
-        /** Adds an incoming edge from this vertex. */
+        /** Adds an incoming edge EDGE from this vertex. */
         private void addIncomingEdge(Edge edge) {
-            _incoming.add(edge);
+            if (addEdgeToMap(edge, _incoming)) {
+                _incomingNum += 1;
+            }
         }
 
-        /** Adds an edge to this vertex. (In an undirected graph.) */
-        private void addEdge(Edge edge) {
-            _outgoing.add(edge);
+        /** Adds edge EDGE to MAP. Returns true is successful, and false
+         *  otherwise. */
+        private boolean addEdgeToMap(Edge edge,
+                Map<Vertex, LinkedList<Edge>> map) {
+            if (edge == null) {
+                return false;
+            }
+            Vertex other = edge.getV(this);
+            LinkedList<Edge> elist = map.get(other);
+            if (elist == null) {
+                elist = new LinkedList<Edge>();
+                map.put(other, elist);
+            }
+            elist.add(edge);
+            return true;
         }
 
         /** Removes outgoing edge EDGE from this vertex. */
         private void removeOutgoing(Edge edge) {
-            _outgoing.remove(edge);
+            if (removeEdgeFromMap(edge, _outgoing)) {
+                _outgoingNum -= 1;
+            }
         }
 
         /** Removes incoming edge EDGE from this vertex. */
         private void removeIncoming(Edge edge) {
-            _incoming.remove(edge);
+            if (removeEdgeFromMap(edge, _incoming)) {
+                _incomingNum -= 1;
+            }
         }
 
-        /** Removes edge EDGE from this vertex. (Convenience method for
-         *  undirected graphs.) */
-        private void removeEdge(Edge edge) {
-            _outgoing.remove(edge);
+        /** Removes an edge EDGE from map MAP. */
+        private boolean removeEdgeFromMap(Edge edge,
+                Map<Vertex, LinkedList<Edge>> map) {
+            if (edge == null) {
+                return false;
+            }
+            Vertex other = edge.getV(this);
+            LinkedList<Edge> elist = map.get(other);
+            if (elist != null) {
+                elist.remove(edge);
+                return true;
+            }
+            return false;
         }
 
         /** Returns an iterator over the outgoing edges of this vertex. */
         private Iterator<Edge> outgoingEdges() {
-            return _outgoing.iterator();
+            return new LinkedEdgeIterator(_outgoing.values().iterator());
         }
 
         /** Returns an iterator over the incoming edges of this vertex. */
         private Iterator<Edge> incomingEdges() {
-            return _incoming.iterator();
+            return new LinkedEdgeIterator(_incoming.values().iterator());
+        }
+
+        /** Returns an iterator over this vertex's successors. */
+        private Iterator<Vertex> successors() {
+            return _outgoing.keySet().iterator();
+        }
+
+        /** Returns an iterator over this vertex's predecessors. */
+        private Iterator<Vertex> predecessors() {
+            return _incoming.keySet().iterator();
         }
 
         /** Returns the number of outgoing edges from this vertex. */
         private int outDegree() {
-            return _outgoing.size();
+            return _outgoingNum;
         }
 
         /** Returns the number of incoming edges into this vertex. */
         private int inDegree() {
-            return _incoming.size();
-        }
-
-        /** Returns the number of edges adjacent this vertex. */
-        private int degree() {
-            return _outgoing.size() + _incoming.size();
+            return _incomingNum;
         }
 
         /** Returns true iff this Vertex contains an outgoing edge
          *  with V as its opposite vertex. */
         private boolean containsEdgeTo(Vertex v) {
-            for (Edge e : _outgoing) {
-                if (e.getV(this) == v) {
-                    return true;
-                }
-            }
-            return false;
+            return _outgoing.get(v) != null;
         }
 
         /** Returns true iff this Vertex contains an outgoing edge
          *  with label LABEL with V as its opposite vertex. */
         private boolean containsEdgeToWithLabel(Vertex v, ELabel label) {
-            for (Edge e : _outgoing) {
-                if (e.getV(this) == v && e.getLabel().equals(label)) {
-                    return true;
+            LinkedList<Edge> elist = _outgoing.get(v);
+            if (elist != null) {
+                for (Edge e : elist) {
+                    if (e.getLabel().equals(label)) {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -145,12 +181,53 @@ public abstract class Graph<VLabel, ELabel> {
             return String.valueOf(_label);
         }
 
+        /** Iterates over all edges in the multiple linked lists of a
+         *  Map<K, LinkedList<Edge>>. */
+        private class LinkedEdgeIterator implements Iterator<Edge> {
+
+            /** Default LinkedEdgeIterator that takes a <LinkedList<Edge>>
+             *  iterator LISTITER as input. */
+            LinkedEdgeIterator(Iterator<LinkedList<Edge>> listIter) {
+                _listIter = listIter;
+                _edgeIter = null;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return _listIter.hasNext()
+                    || (_edgeIter != null && _edgeIter.hasNext());
+            }
+
+            @Override
+            public Edge next() {
+                if ((_edgeIter == null || !_edgeIter.hasNext())
+                        && _listIter.hasNext()) {
+                    _edgeIter = _listIter.next().iterator();
+                }
+                return _edgeIter.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("cannot remove edges");
+            }
+
+            /** Edge iterator. */
+            private Iterator<Edge> _edgeIter;
+            /** LinkedList iterator. */
+            private final Iterator<LinkedList<Edge>> _listIter;
+        }
+
         /** The label on this vertex. */
         private final VLabel _label;
         /** Outgoing edges of this vertex. */
-        private final List<Edge> _outgoing;
+        private final Map<Vertex, LinkedList<Edge>> _outgoing;
         /** Incoming edges of this vertex. */
-        private final List<Edge> _incoming;
+        private final Map<Vertex, LinkedList<Edge>> _incoming;
+        /** Number of incoming edges. */
+        private int _incomingNum;
+        /** Number of outgoing edges. */
+        private int _outgoingNum;
     }
 
     /** Represents one of my edges. */
@@ -210,22 +287,18 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Constructs an empty graph. */
     Graph() {
-        _edgeLabels = new ArrayList<ELabel>();
-        _vertexLabels = new ArrayList<VLabel>();
-        _edges = new HashMap<ELabel, LinkedList<Edge>>();
-        _vertices = new HashMap<VLabel, LinkedList<Vertex>>();
-        _vertNum = 0;
-        _edgeNum = 0;
+        _vertices = new TreeSet<Vertex>(new VertexComparator());
+        _edges = new TreeSet<Edge>(new EdgeComparator());
     }
 
     /** Returns the number of vertices in me. */
     public int vertexSize() {
-        return _vertNum;
+        return _vertices.size();
     }
 
     /** Returns the number of edges in me. */
     public int edgeSize() {
-        return _edgeNum;
+        return _edges.size();
     }
 
     /** Returns true iff I am a directed graph. */
@@ -263,15 +336,8 @@ public abstract class Graph<VLabel, ELabel> {
     /** Returns a new vertex labeled LABEL, and adds it to me with no
      *  incident edges. */
     public Vertex add(VLabel label) {
-        LinkedList<Vertex> vlist = _vertices.get(label);
-        if (vlist == null) {
-            vlist = new LinkedList<Vertex>();
-            _vertices.put(label, vlist);
-        }
         Vertex v = new Vertex(label);
-        _vertexLabels.add(label);
-        vlist.add(v);
-        _vertNum += 1;
+        _vertices.add(v);
         return v;
     }
 
@@ -281,24 +347,17 @@ public abstract class Graph<VLabel, ELabel> {
     public Edge add(Vertex from,
                     Vertex to,
                     ELabel label) {
-        LinkedList<Edge> elist = _edges.get(label);
-        if (elist == null) {
-            elist = new LinkedList<Edge>();
-            _edges.put(label, elist);
-        }
         Edge e = new Edge(from, to, label);
-        _edgeLabels.add(label);
-        elist.add(e);
 
         if (isDirected()) {
             from.addOutgoingEdge(e);
             to.addIncomingEdge(e);
         } else {
-            from.addEdge(e);
-            to.addEdge(e);
+            from.addOutgoingEdge(e);
+            to.addOutgoingEdge(e);
         }
 
-        _edgeNum += 1;
+        _edges.add(e);
         return e;
     }
 
@@ -329,10 +388,7 @@ public abstract class Graph<VLabel, ELabel> {
         for (Edge e : elist) {
             remove(e);
         }
-        _vertexLabels.remove(v.getLabel());
-        LinkedList<Vertex> vlist = _vertices.get(v.getLabel());
-        _vertNum -= 1;
-        vlist.remove(v);
+        _vertices.remove(v);
     }
 
     /** Remove E from me, if present.  E must be between my vertices,
@@ -342,13 +398,10 @@ public abstract class Graph<VLabel, ELabel> {
             e.getV0().removeOutgoing(e);
             e.getV1().removeIncoming(e);
         } else {
-            e.getV0().removeEdge(e);
-            e.getV1().removeEdge(e);
+            e.getV0().removeOutgoing(e);
+            e.getV1().removeOutgoing(e);
         }
-        _edgeLabels.remove(e.getLabel());
-        LinkedList<Edge> elist = _edges.get(e.getLabel());
-        _edgeNum -= 1;
-        elist.remove(e);
+        _edges.remove(e);
     }
 
     /** Remove all edges from V1 to V2 from me, if present.  The result is
@@ -367,22 +420,18 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns an Iterator over all vertices in arbitrary order. */
     public Iteration<Vertex> vertices() {
-        return Iteration.iteration(
-                new ValueIterator<VLabel, Vertex>(_vertexLabels, _vertices));
+        return Iteration.iteration(_vertices);
     }
 
     /** Returns an iterator over all successors of V. */
     public Iteration<Vertex> successors(Vertex v) {
-        return Iteration.iteration(
-                new OtherVertexIterator(outEdges(v), v));
+        return Iteration.iteration(v.successors());
     }
 
     /** Returns an iterator over all predecessors of V. */
     public Iteration<Vertex> predecessors(Vertex v) {
-        return Iteration.iteration(
-                new OtherVertexIterator(inEdges(v), v));
+        return Iteration.iteration(v.predecessors());
     }
-
 
     /** Returns successors(V).  This is a synonym typically used on
      *  undirected graphs. */
@@ -392,8 +441,7 @@ public abstract class Graph<VLabel, ELabel> {
 
     /** Returns an iterator over all edges in me. */
     public Iteration<Edge> edges() {
-        return Iteration.iteration(
-                new ValueIterator<ELabel, Edge>(_edgeLabels, _edges));
+        return Iteration.iteration(_edges);
     }
 
     /** Returns iterator over all outgoing edges from V. */
@@ -417,7 +465,10 @@ public abstract class Graph<VLabel, ELabel> {
      *  addition of edges may cause the edges to be reordered
      *  arbitrarily.  */
     public void orderEdges(Comparator<ELabel> comparator) {
-        Collections.sort(_edgeLabels, comparator);
+        TreeSet<Edge> orderedSet = new TreeSet<Edge>(
+                new EdgeComparator(comparator));
+        orderedSet.addAll(_edges);
+        _edges = orderedSet;
     }
 
     /** Returns the natural ordering on T, as a Comparator.  For
@@ -434,93 +485,69 @@ public abstract class Graph<VLabel, ELabel> {
         };
     }
 
-    /** Iterates over the values in VALUEMAP using the order of the keys
-     *  in KEYLIST. */
-    private static class ValueIterator<Key, Value> implements Iterator<Value> {
-        ValueIterator(List<Key> keyList,
-                Map<Key, LinkedList<Value>> valueMap) {
-            _keyList = keyList;
-            _valueMap = valueMap;
-            _keyIter = _keyList.iterator();
-            _valueIter = null;
-            _lastKey = null;
-        }
+    @SuppressWarnings("unchecked")
+    /** Compares Vertices. */
+    private class VertexComparator implements Comparator<Vertex> {
 
         @Override
-        public boolean hasNext() {
-            if (_valueIter == null || !_valueIter.hasNext()) {
-                return _keyIter.hasNext();
+        public int compare(Vertex v0, Vertex v1) {
+            VLabel l0 = v0.getLabel();
+            VLabel l1 = v1.getLabel();
+            if (l0 == null || l1 == null) {
+                return 1;
+            } else if (l0 instanceof Comparable) {
+                int val = ((Comparable<? super VLabel>) l0).compareTo(l1);
+                if (val != 0) {
+                    return val;
+                }
             }
-            return true;
+
+            Integer v0hash = v0.hashCode();
+            Integer v1hash = v1.hashCode();
+            return Integer.compare(v0hash, v1hash);
         }
 
-        @Override
-        public Value next() {
-            if ((_valueIter == null || !_valueIter.hasNext())
-                    && _keyIter.hasNext()) {
-                Key newKey = null;
-                do {
-                    newKey = _keyIter.next();
-                } while (_lastKey != null && _lastKey.equals(newKey));
-                _lastKey = newKey;
-                _valueIter = _valueMap.get(_lastKey).iterator();
-            }
-            return _valueIter.next();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("remove not supported");
-        }
-
-        private Key _lastKey;
-        private Iterator<Value> _valueIter;
-        private final Iterator<Key> _keyIter;
-        private final List<Key> _keyList;
-        private final Map<Key, LinkedList<Value>> _valueMap;
     }
 
+    /** Compares Edges, possibly using a Comparator<ELabel>. */
+    private class EdgeComparator implements Comparator<Edge> {
 
-    /** Class that iterates over the vertices on the opposite side
-     *  of the edges returned by iteration ITER from some adjacent vertex V. */
-    private class OtherVertexIterator implements Iterator<Vertex> {
-        OtherVertexIterator(Iteration<Edge> iter, Vertex v) {
-            _iter = iter;
-            _v = v;
+        /** Default constructor for EdgeComparator. */
+        EdgeComparator() {
+            _labelComparator = null;
+        }
+
+        /** Alternate constructor for EdgeComparator. Takes in LABELCOMPARATOR 
+         *  to compare vertices with. */
+        EdgeComparator(Comparator<ELabel> labelComparator) {
+            _labelComparator = labelComparator;
         }
 
         @Override
-        public boolean hasNext() {
-            return _iter.hasNext();
+        public int compare(Edge e0, Edge e1) {
+            ELabel l0 = e0.getLabel();
+            ELabel l1 = e1.getLabel();
+            if (l0 == null || l1 == null) {
+                return 1;
+            } else if (_labelComparator != null) {
+                int val = _labelComparator.compare(l0, l1);
+                if (val != 0) {
+                    return val;
+                }
+            }
+
+            Integer e0hash = e0.hashCode();
+            Integer e1hash = e1.hashCode();
+            return Integer.compare(e0hash, e1hash);
         }
 
-        @Override
-        public Vertex next() {
-            return _iter.next().getV(_v);
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("remove not supported");
-        }
-
-        private final Vertex _v;
-        private final Iteration<Edge> _iter;
+        /** ELabel Comparator. */
+        private final Comparator<ELabel> _labelComparator;
     }
 
-    /** Labels for edges in a graph. */
-    private List<ELabel> _edgeLabels;
-    /** Labels for vertices in a graph. */
-    private List<VLabel> _vertexLabels;
-
-    /** Edges in this graph. */
-    private Map<ELabel, LinkedList<Edge>> _edges;
     /** Vertices in this graph. */
-    private Map<VLabel, LinkedList<Vertex>> _vertices;
-
-    /** Number of vertices in this graph. */
-    private int _vertNum;
-    /** Number of edges in this graph. */
-    private int _edgeNum;
+    private TreeSet<Vertex> _vertices;
+    /** Edges in this graph. */
+    private TreeSet<Edge> _edges;
 
 }

@@ -81,7 +81,7 @@ public final class Main {
      */
     private static void make(String makefileName, String fileInfoName,
                              List<String> targets) {
-        Map<String, Integer> changeMap = new HashMap<String, Integer>();
+        Map<String, Long> changeMap = new HashMap<String, Long>();
         List<Rule> ruleList = new ArrayList<Rule>();
 
         try {
@@ -106,7 +106,7 @@ public final class Main {
         }
 
         //TODO: remove print statements
-        for (Map.Entry<String, Integer> e : changeMap.entrySet()) {
+        for (Map.Entry<String, Long> e : changeMap.entrySet()) {
             System.out.println(e);
         }
         for (Rule r : ruleList) {
@@ -118,28 +118,28 @@ public final class Main {
     /** Reads the INFOFILE file and stores the current time and changetime for
      *  each name in the CHANGEDATES Map. Throws an exception if the file does
      *  not exist or if there is some format error. */
-    private static int readFileInfoFile(File infoFile, 
-            Map<String, Integer> changeMap)
+    private static long readFileInfoFile(File infoFile, 
+            Map<String, Long> changeMap)
         throws IOException, IllegalArgumentException, NoSuchElementException {
         _scn = new Scanner(infoFile);
 
-        int lastBuildTime = 0;
+        long lastBuildTime = 0;
 
         Matcher m = CURTIME_REGEX.matcher(_scn.nextLine());
         if (m.matches()) {
-            lastBuildTime = Integer.parseInt(m.group(1));
+            lastBuildTime = Long.parseLong(m.group(1));
         } else {
             throw new IllegalArgumentException();
         }
 
         String mapping, name;
-        Integer changeDate;
+        Long changeDate;
         while (_scn.hasNextLine()) {
             mapping = _scn.nextLine();
             m = NAMECHANGE_REGEX.matcher(mapping);
             if (m.matches()) {
                 name = m.group(1);
-                changeDate = Integer.valueOf(m.group(2));
+                changeDate = Long.valueOf(m.group(2));
                 if (changeDate >= lastBuildTime) {
                     throw new IllegalArgumentException();
                 }
@@ -160,34 +160,50 @@ public final class Main {
         throws IOException, IllegalArgumentException {
         _scn = new Scanner(makeFile);
 
+        Scanner headerScn;
+        Matcher headerMatcher;
+        Matcher commandMatcher;
         Rule rule = null;
-        while (true) {
-            if (_scn.findWithinHorizon(MAKEFILE_REGEX, 0) != null) {
-                MatchResult m = _scn.match();
-                if (m.end(TARGET_TOKEN) > -1) {
-                    if (rule != null) {
-                        ruleList.add(rule);
-                    }
-                    rule = new Rule(m.group(TARGET_TOKEN));
-                } else if (m.end(PREREQ_TOKEN) > -1) {
-                    if (rule != null) {
-                        rule.addCommand(m.group(PREREQ_TOKEN));
-                    } else {
-                        throw new IllegalArgumentException();
-                    }
-                } else if (m.end(ERROR_TOKEN) > -1) {
-                    throw new IllegalArgumentException();
-                } else if (m.end(IGNORE_TOKEN) == -1) {
-                    //FIXME?
-                }
+        String target, line;
+
+        if (!_scn.hasNextLine()) {
+            throw new MakeException("empty makefile");
+        }
+        line = _scn.nextLine();
+        headerMatcher = HEADER_REGEX.matcher(line);
+        if (!headerMatcher.matches()) {
+            throw new MakeException("no rule for command set");
+        }
+        rule = makeRule(line);
+
+        while (_scn.hasNextLine()) {
+            line = _scn.nextLine();
+            headerMatcher = HEADER_REGEX.matcher(line);
+            if (headerMatcher.matches()) {
+                ruleList.add(rule);
+                rule = makeRule(line);
+                continue;
+            }
+
+            commandMatcher = CMND_REGEX.matcher(line);
+            if (commandMatcher.matches()) {
+                rule.addCommand(line.trim());
             } else {
-                if (rule != null) {
-                    ruleList.add(rule);
-                }
-                _scn.close();
-                break;
+                throw new MakeException("syntax error in command: " + line);
             }
         }
+        ruleList.add(rule);
+    }
+
+    /** Returns a Rule made from the header string HEADER. */
+    private static Rule makeRule(String header) {
+        _headScn = new Scanner(header);
+        String target = _headScn.next();
+        Rule rule = new Rule(target.substring(0, target.length() - 1));
+        while (_headScn.hasNext()) {
+            rule.addPrereq(_headScn.next());
+        }
+        return rule;
     }
 
     /** Print a brief usage message and exit program abnormally. */
@@ -199,12 +215,15 @@ public final class Main {
     /** Prints an error to System.err. Format is the same as printf:
      *  ERROR is the format string, and ARGS are its arguments. */
     private static void reportError(String error, Object... args) {
+        System.err.print("Error: ");
         System.err.printf(error, args);
-        System.out.println();
+        System.err.println();
     }
 
     /** Scanner for input files. */
     private static Scanner _scn;
+    /** Scanner for rule headers. */
+    private static Scanner _headScn;
 
     /** Regex to match current time at the first line of a fileInfo file. */
     private static final Pattern CURTIME_REGEX = 
@@ -213,22 +232,10 @@ public final class Main {
     private static final Pattern NAMECHANGE_REGEX =
         Pattern.compile("\\s*?(\\w+)\\s+(\\d+)\\s*?");
 
-    /** Regex to read a MAKEFILE. */
-    private static final Pattern MAKEFILE_REGEX =
-        Pattern.compile("(?m)((?::)?(?:\\s+|(?:#.*)$))"
-                     + "|([^:=#\\s\\\\]+(?=:))"
-                     + "|([^:=#\\s\\\\]+(?!:))"
-                     + "|(.)");
-
-    /** Tokens that are matched in a makefile. */
-    private static final int
-        /** Token for blanks, newlines, or comments. */
-        IGNORE_TOKEN = 1,
-        /** A target from a Rule. */
-        TARGET_TOKEN = 2,
-        /** A prerequisite for a target. */
-        PREREQ_TOKEN = 3,
-        /** A character that shouldn't be there. */
-        ERROR_TOKEN = 4;
+    /** Regex to match a header of a Rule. */
+    private static final Pattern HEADER_REGEX =
+        Pattern.compile("[^:=#\\s\\\\]+:[^:=#\\\\]*");
+    private static final Pattern CMND_REGEX =
+        Pattern.compile("[\\s\\t]+.+");
 
 }
