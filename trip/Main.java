@@ -112,6 +112,8 @@ public final class Main {
         MapGraphBuilder.buildMapGraph(_roads, _locations, g, vmap);
 
         TripFinder tFinder = new TripFinder(g, vmap);
+        TripPrinter tPrinter = new TripPrinter(tFinder.findTrips());
+        tPrinter.printTrip();
     }
 
     /** Reads the map files and stores Locations and Distances. Throws an

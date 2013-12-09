@@ -53,7 +53,7 @@ public class TripFinder {
             throw new TripException(error);
         }
 
-        Trip result = new Trip(end);
+        Trip result = new Trip(start, end);
         for (Graph<Location, Road>.Edge e : elist) {
             Road r = e.getLabel();
             result.addRoad(r, getDirection(r));
