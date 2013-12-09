@@ -8,6 +8,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -17,8 +20,11 @@ import java.io.IOException;
 
 import java.io.File;
 
+import graph.Graph;
+import graph.UndirectedGraph;
+
 /** Initial class for the 'trip' program.
- *  @author
+ *  @author Aleks Kamko
  */
 public final class Main {
 
@@ -98,6 +104,14 @@ public final class Main {
         } catch (IOException | IllegalArgumentException e) {
             usage();
         }
+
+        UndirectedGraph<Location, Road> g =
+            new UndirectedGraph<Location, Road>();
+        Map<String, Graph<Location, Road>.Vertex> vmap =
+            new HashMap<String, Graph<Location, Road>.Vertex>();
+        MapGraphBuilder.buildMapGraph(_roads, _locations, g, vmap);
+
+        TripFinder tFinder = new TripFinder(g, vmap);
     }
 
     /** Reads the map files and stores Locations and Distances. Throws an
@@ -116,8 +130,8 @@ public final class Main {
             locMatcher = LOCATION_REGEX.matcher(line);
             if (locMatcher.matches()) {
                 _locations.add(new Location(locMatcher.group(1),
-                                            new Integer(locMatcher.group(2)),
-                                            new Integer(locMatcher.group(3))));
+                                            new Double(locMatcher.group(2)),
+                                            new Double(locMatcher.group(3))));
                 continue;
             }
             
@@ -125,7 +139,7 @@ public final class Main {
             if (roadMatcher.matches()) {
                 _roads.add(new Road(roadMatcher.group(1),
                                     roadMatcher.group(2),
-                                    new Integer(roadMatcher.group(3)),
+                                    new Double(roadMatcher.group(3)),
                                     roadMatcher.group(4),
                                     roadMatcher.group(5)));
                 continue;
@@ -137,7 +151,8 @@ public final class Main {
 
     /** Print a brief usage message and exit program abnormally. */
     private static void usage() {
-        // FILL THIS IN
+        //FIXME
+        System.err.println("USAGE");
         System.exit(1);
     }
 
