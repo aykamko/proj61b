@@ -16,7 +16,7 @@ public class MapGraphBuilder {
      *  with a mapping from the name of each location to the vertex
      *  representing it in G. */
     public static void buildMapGraph(List<Road> roads, List<Location> locations,
-            DirectedGraph<Location, Road> g, 
+            DirectedGraph<Location, Road> g,
             Map<String, Graph<Location, Road>.Vertex> vmap) {
 
         for (Location loc : locations) {

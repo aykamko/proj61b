@@ -1,14 +1,19 @@
 package trip;
 
 import java.util.LinkedList;
-import java.util.List;
 
 import java.util.Iterator;
 
 import java.util.NoSuchElementException;
 
+/** Represents a trip from one location to another. Takes care of collapsing
+ *  roads of the same name and direction.
+ *  @author Aleks Kamko
+ */
 class Trip {
 
+    /** Constructs a trip with a starting location START and an ending
+     *  location END. */
     Trip(String start, String end) {
         _start = start;
         _end = end;
@@ -25,12 +30,15 @@ class Trip {
         return _end;
     }
 
+    /** Adds the road ROAD to this trip. If ROAD has the same name and
+     *  direction as the previously added road, then both are collapsed into
+     *  one road. */
     public void addRoad(Road road) {
         Road prevRoad = null;
         try {
             prevRoad = _path.getLast();
         } catch (NoSuchElementException e) {
-            /** Ignore NoSuchElementException. */
+            /* Ignore NoSuchElementException. */
         }
 
         if (prevRoad != null) {
@@ -41,7 +49,7 @@ class Trip {
             if (prevName.equals(curName) && prevDirection == curDirection) {
                 _path.removeLast();
                 Double newLength = prevRoad.length() + road.length();
-                Road collapsed = 
+                Road collapsed =
                     new Road(null, curName, newLength, curDirection, null);
                 _path.addLast(collapsed);
                 return;
@@ -51,11 +59,18 @@ class Trip {
         _path.addLast(road);
     }
 
+    /** Returns an Iterator<String> over the route. Formats each individual
+     *  direction according to the trip spec. */
     public Iterator<String> routeIterator() {
         return new DirectionGiver();
     }
 
+    /** An Iterator<String> that returns formatted directions for this Trip,
+     *  road for road. */
     private class DirectionGiver implements Iterator<String> {
+
+        /** Default constructor for DirectionGiver. Constructs an iterator
+         *  over this Trip's _path List. */
         DirectionGiver() {
             _roadIter = _path.iterator();
         }
@@ -82,10 +97,14 @@ class Trip {
             throw new UnsupportedOperationException("cannot remove a path");
         }
 
+        /** This DirectionGiver's Road iterator. */
         private Iterator<Road> _roadIter;
     }
 
+    /** The start location of this Trip. */
     private final String _start;
+    /** The ending location of this Trip. */
     private final String _end;
+    /** Roads to take to get from _start to _end. */
     private final LinkedList<Road> _path;
 }

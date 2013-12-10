@@ -2,8 +2,14 @@ package trip;
 
 import graph.Weighted;
 
+/** Represents a Road in a graph of the map.
+ *  @author Aleks Kamko
+ */
 class Road implements Weighted, Comparable<Road> {
 
+    /** Default constructor for Road. Takes in a start location START,
+     *  a name NAME, a length LENGTH, a direction DIRECTION, and an
+     *  end location END. */
     Road(String start, String name, Double length, Direction direction,
             String end) {
         _start = start;

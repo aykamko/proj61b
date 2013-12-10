@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.FileNotFoundException;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,7 +15,6 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import java.util.Scanner;
-import java.io.BufferedReader;
 
 import java.io.IOException;
 
@@ -120,8 +118,8 @@ public final class Main {
         tPrinter.printTrip();
     }
 
-    /** Reads the map files and stores Locations and Distances. Throws an
-     *  exception if the file does not exist or if there is some format
+    /** Reads the map file MAPFILE and stores Locations and Distances. Throws
+     *  an exception if the file does not exist or if there is some format
      *  error. */
     private static void readMapFile(File mapFile)
         throws IOException, IllegalArgumentException {
@@ -129,8 +127,7 @@ public final class Main {
         _locations = new LinkedList<Location>();
         _roads = new LinkedList<Road>();
 
-        Matcher locMatcher;
-        Matcher roadMatcher;
+        Matcher locMatcher, roadMatcher;
         String line;
         while (_scn.hasNextLine()) {
             line = _scn.nextLine();
@@ -142,7 +139,7 @@ public final class Main {
                                             new Double(locMatcher.group(3))));
                 continue;
             }
-            
+
             roadMatcher = ROAD_REGEX.matcher(line);
             if (roadMatcher.matches()) {
                 String start = roadMatcher.group(1);
@@ -153,32 +150,25 @@ public final class Main {
 
                 Direction direction = null;
                 switch (dirString) {
-                    case "NS": {
-                        direction = SOUTH;
-                        break;
-                    } case "SN": {
-                        direction = NORTH;
-                        break;
-                    } case "EW": {
-                        direction = WEST;
-                        break;
-                    } case "WE": {
-                        direction = EAST;
-                        break;
-                    } default: {
-                        throw new TripException("no direction given");
-                    }
+                case "NS": {
+                    direction = SOUTH;
+                    break;
+                } case "SN": {
+                    direction = NORTH;
+                    break;
+                } case "EW": {
+                    direction = WEST;
+                    break;
+                } case "WE": {
+                    direction = EAST;
+                    break;
+                } default: {
+                    throw new TripException("no direction given");
+                }
                 }
 
-                _roads.add(new Road(start,
-                                    name,
-                                    length,
-                                    direction,
-                                    end));
-                _roads.add(new Road(end,
-                                    name,
-                                    length,
-                                    direction.opposite(),
+                _roads.add(new Road(start, name, length, direction, end));
+                _roads.add(new Road(end, name, length, direction.opposite(),
                                     start));
                 continue;
             } else if (!line.isEmpty()) {

@@ -12,20 +12,20 @@ enum Direction {
     public Direction opposite() {
         Direction result = null;
         switch (this) {
-            case NORTH: {
-                result = SOUTH;
-                break;
-            } case SOUTH: {
-                result = NORTH;
-                break;
-            } case EAST: {
-                result = WEST;
-                break;
-            } case WEST: {
-                result = EAST;
-                break;
-            } default:
-                break;
+        case NORTH: {
+            result = SOUTH;
+            break;
+        } case SOUTH: {
+            result = NORTH;
+            break;
+        } case EAST: {
+            result = WEST;
+            break;
+        } case WEST: {
+            result = EAST;
+            break;
+        } default:
+            break;
         }
         return result;
     }

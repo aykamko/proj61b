@@ -2,8 +2,13 @@ package trip;
 
 import graph.Weightable;
 
+/** Represents a Location in a graph of the map.
+ *  @author Aleks Kamkp
+ */
 class Location implements Weightable, Comparable<Location> {
 
+    /** Default constructor for location. Takes in a name PLACE, an
+     *  x-position XPOS, and a y-position YPOS. */
     Location(String place, Double xPos, Double yPos) {
         _place = place;
         _xPos = xPos;
@@ -16,10 +21,12 @@ class Location implements Weightable, Comparable<Location> {
         return _place;
     }
 
+    /** Returns the x-position of this Location. */
     public Double xPos() {
         return _xPos;
     }
 
+    /** Returns the y-position of this Location. */
     public Double yPos() {
         return _yPos;
     }
