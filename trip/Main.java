@@ -185,12 +185,18 @@ public final class Main {
 
     /** Regex for a Location entry. */
     private static final Pattern LOCATION_REGEX =
-        Pattern.compile("\\s*?L\\s+(\\w+)\\s+"
-                + "([-+]?\\d*(?:\\.\\d+)?)\\s+([-+]?\\d*(?:\\.\\d+)?)\\s*?");
+        Pattern.compile("\\s*?L\\s+"
+                      + "([\\w\\p{Punct}]+)\\s+"
+                      + "([-+]?\\d*(?:\\.\\d+)?)\\s+"
+                      + "([-+]?\\d*(?:\\.\\d+)?)\\s*?");
     /** Regex for a Road entry. */
     private static final Pattern ROAD_REGEX =
-        Pattern.compile("\\s*?R\\s+(\\w+)\\s+(\\w+)\\s+([-+]?\\d*(?:\\.\\d+)?)"
-                      + "\\s+(NS|EW|WE|SN)\\s+(\\w+)\\s*?");
+        Pattern.compile("\\s*?R\\s+"
+                      + "([\\w\\p{Punct}]+)\\s+"
+                      + "([\\w\\p{Punct}]+)\\s+"
+                      + "([-+]?\\d*(?:\\.\\d+)?)\\s+"
+                      + "(NS|EW|WE|SN)\\s+"
+                      + "([\\w\\p{Punct}]+)\\s*?");
 
     /** List of roads from MAPFILE. */
     private static List<Road> _roads;
