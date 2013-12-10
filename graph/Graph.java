@@ -472,8 +472,8 @@ public abstract class Graph<VLabel, ELabel> {
     }
 
     /** Returns the natural ordering on T, as a Comparator.  For
-     *  example, if stringComp = Graph.<Integer>naturalOrder(), then
-     *  stringComp.compare(x1, y1) is <0 if x1<y1, ==0 if x1=y1, and >0
+     *  example, if intComp = Graph.<Integer>naturalOrder(), then
+     *  intComp.compare(x1, y1) is <0 if x1<y1, ==0 if x1=y1, and >0
      *  otherwise. */
     public static <T extends Comparable<? super T>> Comparator<T> naturalOrder()
     {

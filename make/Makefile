@@ -48,7 +48,7 @@ check: unit-test regression-test
 
 # Run Junit tests.
 unit-test: $(CLASSES)
-	java -ea -classpath ..:$(CLASSPATH) trip.Testing
+	java -ea -classpath ..:$(CLASSPATH) make.Testing
 
 regression-test: $(CLASSES)
 	cd ..; ./test-app make-tests/*.tst

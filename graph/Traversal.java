@@ -237,14 +237,14 @@ public class Traversal<VLabel, ELabel> {
 
     /** If the traversal ends prematurely, returns the Vertex argument to
      *  preVisit, visit, or postVisit that caused a Visit routine to
-     *  return false.  Otherwise, returns null. */
+     *  throw StopException.  Otherwise, returns null. */
     public Graph<VLabel, ELabel>.Vertex finalVertex() {
         return _finalVertex;
     }
 
     /** If the traversal ends prematurely, returns the Edge argument to
-     *  preVisit that caused a Visit routine to return false. If it was not
-     *  an edge that caused termination, returns null. */
+     *  preVisit that caused a Visit routine to throw a StopException. If it
+     *  was not an edge that caused termination, returns null. */
     public Graph<VLabel, ELabel>.Edge finalEdge() {
         return _finalEdge;
     }
