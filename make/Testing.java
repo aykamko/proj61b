@@ -17,4 +17,8 @@ public class Testing {
         System.exit(textui.runClasses(make.Testing.class));
     }
 
+    @Test
+    public void dummy() {
+    }
+
 }

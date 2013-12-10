@@ -19,7 +19,7 @@ class TripPrinter {
         for (Trip t : _trips) {
             Iterator<String> routeIter = t.routeIterator();
             while (routeIter.hasNext()) {
-                out.printf("%d: %s%n", i, routeIter.next());
+                out.printf("%d. %s%n", i, routeIter.next());
                 i += 1;
             }
         }

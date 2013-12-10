@@ -46,9 +46,10 @@ public class TripFinder {
     }
 
     private Trip findTrip(String start, String end) {
+        //FIXME: find out why ZERO_DISTANCER works, and replace it
         List<Graph<Location, Road>.Edge> elist =
             Graphs.shortestPath(_mapGraph, _vmap.get(start), 
-                    _vmap.get(end), new LocationDistancer());
+                    _vmap.get(end), Graphs.ZERO_DISTANCER);
         if (elist == null) {
             String error = String.format("impossible to travel from %s to %s.",
                     start, end);
