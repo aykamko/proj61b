@@ -6,8 +6,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.HashSet;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 /** Implements a generalized traversal of a graph.  At any given time,
@@ -42,7 +40,7 @@ import java.util.LinkedList;
  */
 public class Traversal<VLabel, ELabel> {
 
-    /** Perform a traversal of G over all vertices reachable from V.
+    /** Perform a traversal of G over all vertices reachable from V0.
      *  ORDER determines the ordering in which the fringe of
      *  untraversed vertices is visited.  The effect of specifying an
      *  ORDER whose results change as a result of modifications made during the
@@ -54,8 +52,8 @@ public class Traversal<VLabel, ELabel> {
         _lastTraversalType = TraversalTypes.GENERAL;
         _lastOrder = order;
         TreeSet<Graph<VLabel, ELabel>.Vertex> fringe;
-        fringe = new TreeSet<Graph<VLabel, ELabel>.Vertex>
-                 (new VertexComparator(order));
+        fringe = new TreeSet<Graph<VLabel, ELabel>.Vertex>(
+                new VertexComparator(order));
         fringe.add(v0);
 
         if (!_continued) {
@@ -81,12 +79,12 @@ public class Traversal<VLabel, ELabel> {
                                 preVisit(d, u);
                                 fringe.add(u);
                             } catch (RejectException ex) {
-                                /** Ignore RejectException. */
+                                /* Ignore RejectException. */
                             }
                         }
                     }
                 } catch (RejectException ex) {
-                    /** Ignore RejectException. */
+                    /* Ignore RejectException. */
                 }
             }
         } catch (StopException ex) {
@@ -96,7 +94,7 @@ public class Traversal<VLabel, ELabel> {
     }
 
     /** Performs a depth-first traversal of G over all vertices
-     *  reachable from V.  That is, the fringe is a sequence and
+     *  reachable from V0.  That is, the fringe is a sequence and
      *  vertices are added to it or removed from it at one end in
      *  an undefined order.  After the traversal of all successors of
      *  a node is complete, the node itself is revisited by calling
@@ -140,13 +138,13 @@ public class Traversal<VLabel, ELabel> {
                                     fringe.addFirst(u);
                                 }
                             } catch (RejectException ex) {
-                                /** Ignore RejectException. */
+                                /* Ignore RejectException. */
                             }
                         }
                     }
                     fringe.addFirst(v);
                 } catch (RejectException ex) {
-                    /** Ignore RejectException. */
+                    /* Ignore RejectException. */
                 }
             }
         } catch (StopException ex) {
@@ -156,7 +154,7 @@ public class Traversal<VLabel, ELabel> {
     }
 
     /** Performs a breadth-first traversal of G over all vertices
-     *  reachable from V.  That is, the fringe is a sequence and
+     *  reachable from V0.  That is, the fringe is a sequence and
      *  vertices are added to it at one end and removed from it at the
      *  other in an undefined order.  After the traversal of all successors of
      *  a node is complete, the node itself is revisited by calling
@@ -200,13 +198,13 @@ public class Traversal<VLabel, ELabel> {
                                     fringe.addLast(u);
                                 }
                             } catch (RejectException ex) {
-                                /** Ignore RejectException. */
+                                /* Ignore RejectException. */
                             }
                         }
                     }
                     fringe.addLast(v);
                 } catch (RejectException ex) {
-                    /** Ignore RejectException. */
+                    /* Ignore RejectException. */
                 }
             }
         } catch (StopException ex) {
@@ -221,17 +219,17 @@ public class Traversal<VLabel, ELabel> {
     public void continueTraversing(Graph<VLabel, ELabel>.Vertex v) {
         _continued = true;
         switch (_lastTraversalType) {
-            case GENERAL:
-                traverse(theGraph(), v, _lastOrder);
-                break;
-            case DEPTH:
-                depthFirstTraverse(theGraph(), v);
-                break;
-            case BREADTH:
-                breadthFirstTraverse(theGraph(), v);
-                break;
-            default:
-                _continued = false;
+        case GENERAL:
+            traverse(theGraph(), v, _lastOrder);
+            break;
+        case DEPTH:
+            depthFirstTraverse(theGraph(), v);
+            break;
+        case BREADTH:
+            breadthFirstTraverse(theGraph(), v);
+            break;
+        default:
+            _continued = false;
         }
     }
 
@@ -293,15 +291,23 @@ public class Traversal<VLabel, ELabel> {
     private Comparator<VLabel> _lastOrder;
     /** Types of traversals. */
     private enum TraversalTypes {
-        GENERAL, DEPTH, BREADTH;
+        /** General traversal. */
+        GENERAL,
+        /** DFS. */
+        DEPTH,
+        /** BFS. */
+        BREADTH;
     }
     /** Flag for continued traversal. (false by default.) */
     private boolean _continued = false;
 
-    /** Comparator that orders vertices by their VLabels based on a given 
+    /** Comparator that orders vertices by their VLabels based on a given
      *  VLabel Comparator. */
     private class VertexComparator
             implements Comparator<Graph<VLabel, ELabel>.Vertex> {
+
+        /** Constructs a VertexComparator that uses COMPARATOR to compare
+         *  VLabels. */
         VertexComparator(Comparator<VLabel> comparator) {
             _comparator = comparator;
         }

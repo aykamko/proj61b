@@ -20,6 +20,4 @@ public class DirectedGraph<VLabel, ELabel> extends Graph<VLabel, ELabel> {
         return true;
     }
 
-    // FIXME?
-
 }

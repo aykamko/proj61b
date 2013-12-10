@@ -8,7 +8,6 @@ import java.util.HashMap;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.regex.MatchResult;
 
 import java.util.Scanner;
 
@@ -66,11 +65,6 @@ public final class Main {
             targets.add(args[a]);
         }
 
-        //TODO: remove print statement
-        /* for (String s : targets) { */
-        /*     System.out.println(s); */
-        /* } */
- 
         make(makefileName, fileInfoName, targets);
     }
 
@@ -96,7 +90,7 @@ public final class Main {
             targets.add(ruleList.get(0).target());
         }
 
-        TargetBuilder builder = 
+        TargetBuilder builder =
             new TargetBuilder(ruleList, changeMap, targets);
         try {
             builder.buildTargets();
@@ -105,20 +99,12 @@ public final class Main {
             System.exit(1);
         }
 
-        //TODO: remove print statements
-        /* for (Map.Entry<String, Long> e : changeMap.entrySet()) { */
-        /*     System.out.println(e); */
-        /* } */
-        /* for (Rule r : ruleList) { */
-        /*     System.out.println(r); */
-        /* } */
-
     }
 
     /** Reads the INFOFILE file and stores the current time and changetime for
-     *  each name in the CHANGEDATES Map. Throws an exception if the file does
+     *  each name in the CHANGEMAP Map. Throws an exception if the file does
      *  not exist or if there is some format error. */
-    private static long readFileInfoFile(File infoFile, 
+    private static void readFileInfoFile(File infoFile,
             Map<String, Long> changeMap)
         throws IOException, IllegalArgumentException, NoSuchElementException {
         _scn = new Scanner(infoFile);
@@ -150,11 +136,10 @@ public final class Main {
         }
 
         _scn.close();
-        return lastBuildTime;
     }
 
-    /** Reads the MAKEFILE and stores each rule as a Rule object in RULELIST. 
-     *  Throws an exception if the file does not exist or if there is some 
+    /** Reads the MAKEFILE and stores each rule as a Rule object in RULELIST.
+     *  Throws an exception if the file does not exist or if there is some
      *  format error. */
     private static void readMakeFile(File makeFile, List<Rule> ruleList)
         throws IOException, IllegalArgumentException {
@@ -230,7 +215,7 @@ public final class Main {
     private static Scanner _headScn;
 
     /** Regex to match current time at the first line of a fileInfo file. */
-    private static final Pattern CURTIME_REGEX = 
+    private static final Pattern CURTIME_REGEX =
         Pattern.compile("\\s*?(\\d+)\\s*?");
     /** Regex to match a NAME CHANGEDATE on a line of a fileInfo file. */
     private static final Pattern NAMECHANGE_REGEX =
@@ -239,6 +224,7 @@ public final class Main {
     /** Regex to match a header of a Rule. */
     private static final Pattern HEADER_REGEX =
         Pattern.compile("[^:=#\\s\\\\]+:[^:=#\\\\]*");
+    /** Regex to match a command for a Rule. */
     private static final Pattern CMND_REGEX =
         Pattern.compile("[\\s\\t]+.+");
 

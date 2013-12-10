@@ -2,14 +2,9 @@ package graph;
 
 import java.util.Comparator;
 
-import java.util.Collections;
-
 import java.util.Map;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 import java.util.Set;
@@ -111,7 +106,8 @@ public abstract class Graph<VLabel, ELabel> {
             }
         }
 
-        /** Removes an edge EDGE from map MAP. */
+        /** Removes an edge EDGE from map MAP. Returns true is successful,
+         *  otherwise false. */
         private boolean removeEdgeFromMap(Edge edge,
                 Map<Vertex, LinkedList<Edge>> map) {
             if (edge == null) {
@@ -485,8 +481,8 @@ public abstract class Graph<VLabel, ELabel> {
         };
     }
 
-    @SuppressWarnings("unchecked")
     /** Compares Vertices. */
+    @SuppressWarnings("unchecked")
     private class VertexComparator implements Comparator<Vertex> {
 
         @Override
@@ -517,7 +513,7 @@ public abstract class Graph<VLabel, ELabel> {
             _labelComparator = null;
         }
 
-        /** Alternate constructor for EdgeComparator. Takes in LABELCOMPARATOR 
+        /** Alternate constructor for EdgeComparator. Takes in LABELCOMPARATOR
          *  to compare vertices with. */
         EdgeComparator(Comparator<ELabel> labelComparator) {
             _labelComparator = labelComparator;

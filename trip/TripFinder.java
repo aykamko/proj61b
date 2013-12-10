@@ -56,7 +56,6 @@ public class TripFinder {
     /** Returns the Trip between starting location START and ending location
      *  END. Computed using the A* algorithm. */
     private Trip findTrip(String start, String end) {
-        //FIXME: find out why ZERO_DISTANCER works, and replace it
         List<Graph<Location, Road>.Edge> elist =
             Graphs.shortestPath(_mapGraph, _vmap.get(start),
                     _vmap.get(end), Graphs.ZERO_DISTANCER);

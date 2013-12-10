@@ -20,5 +20,4 @@ public class UndirectedGraph<VLabel, ELabel> extends Graph<VLabel, ELabel> {
         return false;
     }
 
-    // FIXME?
 }

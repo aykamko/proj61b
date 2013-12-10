@@ -13,7 +13,6 @@ import java.util.Map;
 import graph.Graph;
 import graph.DirectedGraph;
 import graph.NoLabel;
-import graph.Traversal;
 
 /** Class that builds targets for the 'make' program and updates targets'
  *  changedate.
@@ -39,9 +38,10 @@ public class TargetBuilder {
         for (String target : _targetList) {
             buildTarget(target, true);
         }
-        
     }
 
+    /** Builds TARGET if FORCEBUILD is true, if it has at least one younger
+     *  prerequisite, or if it has no previously recorded changedate. */
     private void buildTarget(String target, boolean forceBuild) {
         if (_builtSet.contains(target)) {
             return;
@@ -75,14 +75,13 @@ public class TargetBuilder {
 
         if (build) {
             for (String cmnd : rule.commandSet()) {
-                //FIXME?
                 System.out.println(cmnd);
             }
             _builtSet.add(target);
         }
     }
 
-    /** Returns the Rule associated with the target, or null if no rule
+    /** Returns the Rule associated with TARGET, or null if no rule
      *  exists. */
     private Rule ruleForTarget(String target) {
         Rule result = null;
@@ -132,7 +131,7 @@ public class TargetBuilder {
             commandSet = rule.commandSet();
 
             for (String cmnd : commandSet) {
-                Graph<InCountLabel, NoLabel>.Vertex v = 
+                Graph<InCountLabel, NoLabel>.Vertex v =
                     addedMap.get(cmnd);
                 if (v == null) {
                     v = _depGraph.add(new InCountLabel(cmnd));
@@ -161,8 +160,8 @@ public class TargetBuilder {
 
     /** Returns a list of the vertices in graph G in topologically sorted
      *  order. */
-    private static List<String> 
-        topologicalSort(Graph<InCountLabel, NoLabel> g) {
+    private static List<String>
+    topologicalSort(Graph<InCountLabel, NoLabel> g) {
 
         List<String> sorted = new ArrayList<String>();
 

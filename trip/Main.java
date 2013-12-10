@@ -179,7 +179,6 @@ public final class Main {
 
     /** Print a brief usage message and exit program abnormally. */
     private static void usage() {
-        //FIXME
         System.err.println("USAGE");
         System.exit(1);
     }

@@ -4,9 +4,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import java.util.LinkedList;
-import java.util.List;
-
-import java.util.Arrays;
 
 /** Unit tests for the Traversal.java
  *  @author Aleks Kamko
@@ -43,7 +40,7 @@ public class TraversalTesting {
 
         assertArrayEquals("Incorrect: depth-first",
                 new String[]{ "bA", "aB", "aF", "bB", "aC", "bF", "aE", "cA",
-                              "bC", "aD", "aE", "cB", "bE", "cF", "bD", "cC", 
+                              "bC", "aD", "aE", "cB", "bE", "cF", "bD", "cC",
                               "cE", "cD" },
                 visitList.toArray());
     }
@@ -176,9 +173,9 @@ public class TraversalTesting {
         addEdge(g, vF, vE, "FE");
 
         markTraversal.breadthFirstTraverse(g, vA);
- 
+
         assertArrayEquals("Incorrect: depth-first",
-                new String[]{ "bA", "aB", "aF", "aE", "bB", "aC", "aD", "bF", 
+                new String[]{ "bA", "aB", "aF", "aE", "bB", "aC", "aD", "bF",
                               "aE", "bE", "aC", "aD", "cA", "bC", "aD", "bD",
                               "cB", "cF", "cE", "cC", "cD" },
                 visitList.toArray());
@@ -209,7 +206,7 @@ public class TraversalTesting {
         markTraversal.breadthFirstTraverse(g, vA);
 
         assertArrayEquals("Incorrect: depth-first",
-                new String[]{ "bA", "aB", "aC", "aD", "bB", "bC", "bD", "aE", 
+                new String[]{ "bA", "aB", "aC", "aD", "bB", "bC", "bD", "aE",
                               "aF", "cA", "cB", "cC", "bE", "bF", "cD", "cE",
                               "cF" },
                 visitList.toArray());
@@ -239,11 +236,11 @@ public class TraversalTesting {
         private final LinkedList<String> _visitList;
     }
 
-    private static <VLabel, ELabel> Graph<VLabel, ELabel>.Edge 
-        addEdge(Graph<VLabel, ELabel> g,
-                Graph<VLabel, ELabel>.Vertex v0,
-                Graph<VLabel, ELabel>.Vertex v1,
-                ELabel el) {
+    private static <VLabel, ELabel> Graph<VLabel, ELabel>.Edge
+    addEdge(Graph<VLabel, ELabel> g,
+            Graph<VLabel, ELabel>.Vertex v0,
+            Graph<VLabel, ELabel>.Vertex v1,
+            ELabel el) {
         return g.add(v0, v1, el);
     }
 }

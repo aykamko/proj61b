@@ -14,9 +14,11 @@ public class Testing {
 
     /** Run all JUnit tests in the graph package. */
     public static void main(String[] ignored) {
-        //FIXME
-        /* System.exit(textui.runClasses(trip.Testing.class)); */
+        System.exit(textui.runClasses(trip.Testing.class));
     }
 
+    @Test
+    public void dummy() {
+    }
 
 }
