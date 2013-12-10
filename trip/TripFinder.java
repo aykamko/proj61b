@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import java.util.NoSuchElementException;
 
@@ -27,8 +29,8 @@ public class TripFinder {
         String start, end;
         start = end = null;
         try {
-            start = _scn.next();
-            end = _scn.next();
+            start = _scn.next().trim();
+            end = _scn.next().trim();
         } catch (NoSuchElementException e) {
             throw new TripException("no trips to be found");
         }
@@ -36,7 +38,7 @@ public class TripFinder {
         result.add(findTrip(start, end));
         while (_scn.hasNext()) {
             start = end;
-            end = _scn.next();
+            end = _scn.next().trim();
             result.add(findTrip(start, end));
         }
 

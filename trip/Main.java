@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.io.FileNotFoundException;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import java.util.Scanner;
+import java.io.BufferedReader;
 
 import java.io.IOException;
 
@@ -123,13 +125,15 @@ public final class Main {
      *  error. */
     private static void readMapFile(File mapFile)
         throws IOException, IllegalArgumentException {
-        Scanner scanner = new Scanner(mapFile);
+        _scn = new Scanner(mapFile);
+        _locations = new LinkedList<Location>();
+        _roads = new LinkedList<Road>();
 
         Matcher locMatcher;
         Matcher roadMatcher;
         String line;
-        while (scanner.hasNextLine()) {
-            line = scanner.nextLine();
+        while (_scn.hasNextLine()) {
+            line = _scn.nextLine();
 
             locMatcher = LOCATION_REGEX.matcher(line);
             if (locMatcher.matches()) {
@@ -177,7 +181,7 @@ public final class Main {
                                     direction.opposite(),
                                     start));
                 continue;
-            } else {
+            } else if (!line.isEmpty()) {
                 throw new IllegalArgumentException();
             }
         }
@@ -192,15 +196,18 @@ public final class Main {
 
     /** Regex for a Location entry. */
     private static final Pattern LOCATION_REGEX =
-        Pattern.compile("\\s*?L\\s+(\\w+)\\s+(\\d+)\\s+(\\d+)\\s*?");
+        Pattern.compile("\\s*?L\\s+(\\w+)\\s+"
+                + "([-+]?\\d*(?:\\.\\d+)?)\\s+([-+]?\\d*(?:\\.\\d+)?)\\s*?");
     /** Regex for a Road entry. */
     private static final Pattern ROAD_REGEX =
-        Pattern.compile("\\s*?R\\s+(\\w+)\\s+(\\w+)\\s+(\\d+)\\s+"
-                      + "(NS|EW|WE|SN)\\s+(\\w+)\\s*?");
+        Pattern.compile("\\s*?R\\s+(\\w+)\\s+(\\w+)\\s+([-+]?\\d*(?:\\.\\d+)?)"
+                      + "\\s+(NS|EW|WE|SN)\\s+(\\w+)\\s*?");
 
     /** List of roads from MAPFILE. */
     private static List<Road> _roads;
     /** List of locations from MAPFILE. */
     private static List<Location> _locations;
+    /** Scanner for map file and requests. */
+    private static Scanner _scn;
 
 }
