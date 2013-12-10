@@ -20,8 +20,10 @@ import java.io.IOException;
 
 import java.io.File;
 
+import static trip.Direction.*;
+
 import graph.Graph;
-import graph.UndirectedGraph;
+import graph.DirectedGraph;
 
 /** Initial class for the 'trip' program.
  *  @author Aleks Kamko
@@ -105,8 +107,8 @@ public final class Main {
             usage();
         }
 
-        UndirectedGraph<Location, Road> g =
-            new UndirectedGraph<Location, Road>();
+        DirectedGraph<Location, Road> g =
+            new DirectedGraph<Location, Road>();
         Map<String, Graph<Location, Road>.Vertex> vmap =
             new HashMap<String, Graph<Location, Road>.Vertex>();
         MapGraphBuilder.buildMapGraph(_roads, _locations, g, vmap);
@@ -139,11 +141,41 @@ public final class Main {
             
             roadMatcher = ROAD_REGEX.matcher(line);
             if (roadMatcher.matches()) {
-                _roads.add(new Road(roadMatcher.group(1),
-                                    roadMatcher.group(2),
-                                    new Double(roadMatcher.group(3)),
-                                    roadMatcher.group(4),
-                                    roadMatcher.group(5)));
+                String start = roadMatcher.group(1);
+                String name = roadMatcher.group(2);
+                Double length = new Double(roadMatcher.group(3));
+                String dirString = roadMatcher.group(4);
+                String end = roadMatcher.group(5);
+
+                Direction direction = null;
+                switch (dirString) {
+                    case "NS": {
+                        direction = SOUTH;
+                        break;
+                    } case "SN": {
+                        direction = NORTH;
+                        break;
+                    } case "EW": {
+                        direction = WEST;
+                        break;
+                    } case "WE": {
+                        direction = EAST;
+                        break;
+                    } default: {
+                        throw new TripException("no direction given");
+                    }
+                }
+
+                _roads.add(new Road(start,
+                                    name,
+                                    length,
+                                    direction,
+                                    end));
+                _roads.add(new Road(end,
+                                    name,
+                                    length,
+                                    direction.opposite(),
+                                    start));
                 continue;
             } else {
                 throw new IllegalArgumentException();

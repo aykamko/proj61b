@@ -56,14 +56,10 @@ public class TripFinder {
         Trip result = new Trip(start, end);
         for (Graph<Location, Road>.Edge e : elist) {
             Road r = e.getLabel();
-            result.addRoad(r, getDirection(r));
+            result.addRoad(r);
         }
 
         return result;
-    }
-
-    private char getDirection(Road road) {
-        return road.direction().charAt(1);
     }
 
     private static class LocationDistancer implements Distancer<Location> {

@@ -4,7 +4,7 @@ import graph.Weighted;
 
 class Road implements Weighted, Comparable<Road> {
 
-    Road(String start, String name, Double length, String direction,
+    Road(String start, String name, Double length, Direction direction,
             String end) {
         _start = start;
         _end = end;
@@ -34,7 +34,7 @@ class Road implements Weighted, Comparable<Road> {
     }
 
     /** Returns the direction of this road. */
-    public String direction() {
+    public Direction direction() {
         return _direction;
     }
 
@@ -57,7 +57,6 @@ class Road implements Weighted, Comparable<Road> {
     /** Length/weight of this road. */
     private final Double _length;
     /** Direction of this road. */
-    private final String _direction;
-
+    private final Direction _direction;
 
 }

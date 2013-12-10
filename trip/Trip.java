@@ -13,7 +13,6 @@ class Trip {
         _start = start;
         _end = end;
         _path = new LinkedList<Road>();
-        _directions = new LinkedList<Character>();
     }
 
     /** Returns the start of this road. */
@@ -26,31 +25,30 @@ class Trip {
         return _end;
     }
 
-    public void addRoad(Road road, Character direction) {
+    public void addRoad(Road road) {
         Road prevRoad = null;
-        Character prevDirection = null;
         try {
             prevRoad = _path.getLast();
-            prevDirection = _directions.getLast();
         } catch (NoSuchElementException e) {
             /** Ignore NoSuchElementException. */
         }
 
-        if (prevRoad != null && prevDirection != null) {
+        if (prevRoad != null) {
             String prevName = prevRoad.name();
+            Direction prevDirection = prevRoad.direction();
             String curName = road.name();
-            if (prevName.equals(curName) && prevDirection == direction) {
+            Direction curDirection = road.direction();
+            if (prevName.equals(curName) && prevDirection == curDirection) {
                 _path.removeLast();
                 Double newLength = prevRoad.length() + road.length();
                 Road collapsed = 
-                    new Road(null, curName, newLength, null, null);
+                    new Road(null, curName, newLength, curDirection, null);
                 _path.addLast(collapsed);
                 return;
             }
         }
 
         _path.addLast(road);
-        _directions.addLast(direction);
     }
 
     public Iterator<String> routeIterator() {
@@ -76,7 +74,7 @@ class Trip {
                 addendum = String.format(" to %s", _end);
             }
             return String.format(path,
-                    next.name(), getDirection(next), next.length(), addendum);
+                    next.name(), next.direction(), next.length(), addendum);
         }
 
         @Override
@@ -87,29 +85,7 @@ class Trip {
         private Iterator<Road> _roadIter;
     }
 
-    private String getDirection(Road road) {
-        char direction = road.direction().charAt(1);
-        String result = null;
-        switch (direction) {
-            case 'N': {
-                result = "north";
-                break;
-            } case 'E': {
-                result = "east";
-                break;
-            } case 'S': {
-                result = "south";
-                break;
-            } case 'W': {
-                result = "west";
-                break;
-            }
-        }
-        return result;
-    }
-
     private final String _start;
     private final String _end;
     private final LinkedList<Road> _path;
-    private final LinkedList<Character> _directions;
 }

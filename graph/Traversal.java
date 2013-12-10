@@ -77,7 +77,6 @@ public class Traversal<VLabel, ELabel> {
                         u = d.getV(v);
                         if (!_marked.contains(u)) {
                             finalEdge = d;
-                            finalVertex = u;
                             try {
                                 preVisit(d, u);
                                 fringe.add(u);
@@ -135,7 +134,6 @@ public class Traversal<VLabel, ELabel> {
                         u = d.getV(v);
                         if (!_marked.contains(u)) {
                             finalEdge = d;
-                            finalVertex = u;
                             try {
                                 preVisit(d, u);
                                 if (!fringe.contains(u)) {
@@ -196,7 +194,6 @@ public class Traversal<VLabel, ELabel> {
                         u = d.getV(v);
                         if (!_marked.contains(u)) {
                             finalEdge = d;
-                            finalVertex = u;
                             try {
                                 preVisit(d, u);
                                 if (!fringe.contains(u)) {
