@@ -63,7 +63,7 @@ public class TargetBuilder {
         for (String prereq : rule.prereqSet()) {
             buildTarget(prereq, false);
             prereqAge = _changeMap.get(prereq);
-            if (prereqAge != null && prereqAge > age) {
+            if (prereqAge != null && age != null && prereqAge > age) {
                 build = true;
             }
         }

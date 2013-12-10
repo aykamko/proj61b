@@ -67,9 +67,9 @@ public final class Main {
         }
 
         //TODO: remove print statement
-        for (String s : targets) {
-            System.out.println(s);
-        }
+        /* for (String s : targets) { */
+        /*     System.out.println(s); */
+        /* } */
  
         make(makefileName, fileInfoName, targets);
     }
@@ -106,12 +106,12 @@ public final class Main {
         }
 
         //TODO: remove print statements
-        for (Map.Entry<String, Long> e : changeMap.entrySet()) {
-            System.out.println(e);
-        }
-        for (Rule r : ruleList) {
-            System.out.println(r);
-        }
+        /* for (Map.Entry<String, Long> e : changeMap.entrySet()) { */
+        /*     System.out.println(e); */
+        /* } */
+        /* for (Rule r : ruleList) { */
+        /*     System.out.println(r); */
+        /* } */
 
     }
 
@@ -178,6 +178,10 @@ public final class Main {
 
         while (_scn.hasNextLine()) {
             line = _scn.nextLine();
+            if (line.isEmpty()) {
+                continue;
+            }
+
             headerMatcher = HEADER_REGEX.matcher(line);
             if (headerMatcher.matches()) {
                 ruleList.add(rule);
@@ -187,7 +191,7 @@ public final class Main {
 
             commandMatcher = CMND_REGEX.matcher(line);
             if (commandMatcher.matches()) {
-                rule.addCommand(line.trim());
+                rule.addCommand(line);
             } else {
                 throw new MakeException("syntax error in command: " + line);
             }
@@ -230,7 +234,7 @@ public final class Main {
         Pattern.compile("\\s*?(\\d+)\\s*?");
     /** Regex to match a NAME CHANGEDATE on a line of a fileInfo file. */
     private static final Pattern NAMECHANGE_REGEX =
-        Pattern.compile("\\s*?(\\w+)\\s+(\\d+)\\s*?");
+        Pattern.compile("\\s*?([^:=#\\s\\\\]+)\\s+(\\d+)\\s*?");
 
     /** Regex to match a header of a Rule. */
     private static final Pattern HEADER_REGEX =
