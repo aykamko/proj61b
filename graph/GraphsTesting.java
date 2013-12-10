@@ -94,10 +94,9 @@ public class GraphsTesting {
             Arrays.asList(eAH, eHJ, eIJ);
         assertArrayEquals("incorrect: A*", compare.toArray(), path.toArray());
 
-        //FIXME
         path = Graphs.<WeightablePlace, WeightedPath>
             shortestPath(g, vA, vF, d);
-        compare = Arrays.asList(eAC, eCG, eIG, eIF);
+        compare = Arrays.asList(eAH, eHJ, eIJ, eIF);
         assertArrayEquals("incorrect: A*", compare.toArray(), path.toArray());
 
         path = Graphs.<WeightablePlace, WeightedPath>

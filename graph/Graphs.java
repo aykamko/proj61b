@@ -63,13 +63,12 @@ public final class Graphs {
             }
         };
 
-        try {
-            astar.traverse(G, V0, weightOrder);
-        } catch (StopException e) {
-            return path;
+        astar.traverse(G, V0, weightOrder);
+        if (path.isEmpty()) {
+            return null;
         }
 
-        return null;
+        return path;
     }
 
     /** Returns a path from V0 to V1 in G of minimum weight, according
@@ -123,13 +122,12 @@ public final class Graphs {
             }
         };
 
-        try {
-            astarweighted.traverse(G, V0, weightOrder);
-        } catch (StopException e) {
-            return path;
+        astarweighted.traverse(G, V0, weightOrder);
+        if (path.isEmpty()) {
+            return null;
         }
 
-        return null;
+        return path;
     }
 
     /** Subclass of Traversal that uses the A* algorithm as its general
@@ -157,6 +155,8 @@ public final class Graphs {
             _shortestList = shortestList;
             _linkMap = new HashMap<Graph<VLabel, ELabel>.Edge,
                      Graph<VLabel, ELabel>.Edge>();
+            _lastEdgeMap = new HashMap<Graph<VLabel, ELabel>.Vertex,
+                            Graph<VLabel, ELabel>.Edge>();
         }
 
         @Override
@@ -164,7 +164,7 @@ public final class Graphs {
                                 Graph<VLabel, ELabel>.Vertex v) {
             ELabel elabel = e.getLabel();
             VLabel vlabel = v.getLabel();
-            VLabel lastLabel = this.finalVertex().getLabel();
+            VLabel lastLabel = _lastVertex.getLabel();
 
             double vweight = getVLabelWeight(vlabel);
             double lastWeight = getVLabelWeight(lastLabel);
@@ -173,20 +173,26 @@ public final class Graphs {
             if (vweight > (edgeWeight + lastWeight)) {
                 setVLabelWeight(vlabel, edgeWeight + lastWeight);
 
-                Graph<VLabel, ELabel>.Edge lastEdge = this.finalEdge();
+                Graph<VLabel, ELabel>.Edge lastEdge =
+                    _lastEdgeMap.get(_lastVertex);
                 _linkMap.put(e, lastEdge);
+                _lastEdgeMap.put(v, e);
+            } else {
+                throw new RejectException();
             }
         }
 
         @Override
         protected void visit(Graph<VLabel, ELabel>.Vertex v) {
             if (v == _endVertex) {
-                Graph<VLabel, ELabel>.Edge lastEdge = this.finalEdge();
+                Graph<VLabel, ELabel>.Edge lastEdge = _lastEdgeMap.get(v);
                 while (lastEdge != null) {
                     _shortestList.addFirst(lastEdge);
                     lastEdge = _linkMap.get(lastEdge);
                 }
                 throw new StopException();
+            } else {
+                _lastVertex = v;
             }
         }
 
@@ -218,6 +224,12 @@ public final class Graphs {
         protected final Weighter<? super VLabel> _vweighter;
         /** Reads weights of ELabels. */
         protected final Weighting<? super ELabel> _eweighter;
+
+        /** Last visited vertex. */
+        protected Graph<VLabel, ELabel>.Vertex _lastVertex;
+        /** Map of last traversed edges. */
+        protected Map<Graph<VLabel, ELabel>.Vertex,
+                Graph<VLabel, ELabel>.Edge> _lastEdgeMap;
         /** Shortest path from the starting vertex of a traversal to
          *  _endVertex, if it exists. null otherwise. */
         protected final LinkedList<Graph<VLabel, ELabel>.Edge> _shortestList;

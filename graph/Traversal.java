@@ -57,40 +57,42 @@ public class Traversal<VLabel, ELabel> {
         fringe = new TreeSet<Graph<VLabel, ELabel>.Vertex>
                  (new VertexComparator(order));
         fringe.add(v0);
+
         if (!_continued) {
             _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
         }
         _continued = false;
 
-        Graph<VLabel, ELabel>.Vertex v, u;
-        Graph<VLabel, ELabel>.Edge e;
-        List<Graph<VLabel, ELabel>.Vertex> vlist;
-        List<Graph<VLabel, ELabel>.Edge> elist;
-        vlist = new ArrayList<Graph<VLabel, ELabel>.Vertex>();
-        elist = new ArrayList<Graph<VLabel, ELabel>.Edge>();
-        vlist.add(v0);
-        elist.add(null);
-        int edgeIndex;
-        while (!fringe.isEmpty()) {
-            v = fringe.pollFirst();
-            edgeIndex = vlist.indexOf(v);
-            e = elist.get(edgeIndex);
-            vlist.remove(edgeIndex);
-            elist.remove(edgeIndex);
-
-            _marked.add(v);
-            _finalEdge = e;
-            _finalVertex = v;
-            visit(v);
-            for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
-                u = d.getV(v);
-                if (!_marked.contains(u)) {
-                    preVisit(d, u);
-                    elist.add(d);
-                    vlist.add(u);
-                    fringe.add(u);
+        Graph<VLabel, ELabel>.Vertex v, u, finalVertex = null;
+        Graph<VLabel, ELabel>.Edge e, finalEdge = null;
+        try {
+            while (!fringe.isEmpty()) {
+                v = fringe.pollFirst();
+                _marked.add(v);
+                finalEdge = null;
+                finalVertex = v;
+                try {
+                    visit(v);
+                    for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
+                        u = d.getV(v);
+                        if (!_marked.contains(u)) {
+                            finalEdge = d;
+                            finalVertex = u;
+                            try {
+                                preVisit(d, u);
+                                fringe.add(u);
+                            } catch (RejectException ex) {
+                                /** Ignore RejectException. */
+                            }
+                        }
+                    }
+                } catch (RejectException ex) {
+                    /** Ignore RejectException. */
                 }
             }
+        } catch (StopException ex) {
+            _finalVertex = finalVertex;
+            _finalEdge = finalEdge;
         }
     }
 
@@ -105,45 +107,53 @@ public class Traversal<VLabel, ELabel> {
         _graph = G;
         _lastTraversalType = TraversalTypes.DEPTH;
         LinkedList<Graph<VLabel, ELabel>.Vertex> fringe;
-        LinkedList<Graph<VLabel, ELabel>.Edge> estack;
         fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
-        estack = new LinkedList<Graph<VLabel, ELabel>.Edge>();
-        fringe.addFirst(v0);
-        estack.addFirst(null);
+        fringe.addLast(v0);
+
         if (!_continued) {
             _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
-            _processed = new HashSet<Graph<VLabel, ELabel>.Vertex>();
         }
         _continued = false;
 
-        Graph<VLabel, ELabel>.Vertex v, u;
-        Graph<VLabel, ELabel>.Edge e;
-        while (!fringe.isEmpty()) {
-            v = fringe.pollFirst();
-            e = estack.pollFirst();
-
-            if (!_marked.contains(v)) {
-                _marked.add(v);
-                _finalVertex = v;
-                _finalEdge = e;
-                visit(v);
-                fringe.addFirst(v);
-                estack.addFirst(null);
-                for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
-                    u = d.getV(v);
-                        _finalEdge = d;
-                        _finalVertex = u;
-                        preVisit(d, u);
-                    if (!_marked.contains(u)) {
-                        fringe.addFirst(u);
-                        estack.addFirst(d);
-                    }
+        Graph<VLabel, ELabel>.Vertex v, u, finalVertex = null;
+        Graph<VLabel, ELabel>.Edge e, finalEdge = null;
+        try {
+            while (!fringe.isEmpty()) {
+                v = fringe.pollLast();
+                if (_marked.contains(v)) {
+                    finalVertex = v;
+                    finalEdge = null;
+                    postVisit(v);
+                    continue;
                 }
-            } else if (!_processed.contains(v)) {
-                _finalVertex = v;
-                postVisit(v);
-                _processed.add(v);
+                finalVertex = v;
+                finalEdge = null;
+                _marked.add(v);
+                try {
+                    visit(v);
+                    for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
+                        u = d.getV(v);
+                        if (!_marked.contains(u)) {
+                            finalEdge = d;
+                            finalVertex = u;
+                            try {
+                                preVisit(d, u);
+                                if (!fringe.contains(u)) {
+                                    fringe.addFirst(u);
+                                }
+                            } catch (RejectException ex) {
+                                /** Ignore RejectException. */
+                            }
+                        }
+                    }
+                    fringe.addFirst(v);
+                } catch (RejectException ex) {
+                    /** Ignore RejectException. */
+                }
             }
+        } catch (StopException ex) {
+            _finalVertex = finalVertex;
+            _finalEdge = finalEdge;
         }
     }
 
@@ -158,45 +168,53 @@ public class Traversal<VLabel, ELabel> {
         _graph = G;
         _lastTraversalType = TraversalTypes.BREADTH;
         LinkedList<Graph<VLabel, ELabel>.Vertex> fringe;
-        LinkedList<Graph<VLabel, ELabel>.Edge> equeue;
         fringe = new LinkedList<Graph<VLabel, ELabel>.Vertex>();
-        equeue = new LinkedList<Graph<VLabel, ELabel>.Edge>();
         fringe.addFirst(v0);
-        equeue.addFirst(null);
+
         if (!_continued) {
             _marked = new HashSet<Graph<VLabel, ELabel>.Vertex>();
-            _processed = new HashSet<Graph<VLabel, ELabel>.Vertex>();
         }
         _continued = false;
 
-        Graph<VLabel, ELabel>.Vertex v, u;
-        Graph<VLabel, ELabel>.Edge e;
-        while (!fringe.isEmpty()) {
-            v = fringe.pollLast();
-            e = equeue.pollLast();
-
-            if (!_marked.contains(v)) {
-                _marked.add(v);
-                _finalVertex = v;
-                _finalEdge = e;
-                visit(v);
-                for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
-                    u = d.getV(v);
-                        _finalEdge = d;
-                        _finalVertex = u;
-                        preVisit(d, u);
-                    if (!_marked.contains(u)) {
-                        fringe.addFirst(u);
-                        equeue.addFirst(d);
-                    }
+        Graph<VLabel, ELabel>.Vertex v, u, finalVertex = null;
+        Graph<VLabel, ELabel>.Edge e, finalEdge = null;
+        try {
+            while (!fringe.isEmpty()) {
+                v = fringe.pollFirst();
+                if (_marked.contains(v)) {
+                    finalVertex = v;
+                    finalEdge = null;
+                    postVisit(v);
+                    continue;
                 }
-                fringe.addFirst(v);
-                equeue.addFirst(null);
-            } else if (!_processed.contains(v)) {
-                _finalVertex = v;
-                postVisit(v);
-                _processed.add(v);
+                finalVertex = v;
+                finalEdge = null;
+                _marked.add(v);
+                try {
+                    visit(v);
+                    for (Graph<VLabel, ELabel>.Edge d : G.outEdges(v)) {
+                        u = d.getV(v);
+                        if (!_marked.contains(u)) {
+                            finalEdge = d;
+                            finalVertex = u;
+                            try {
+                                preVisit(d, u);
+                                if (!fringe.contains(u)) {
+                                    fringe.addLast(u);
+                                }
+                            } catch (RejectException ex) {
+                                /** Ignore RejectException. */
+                            }
+                        }
+                    }
+                    fringe.addLast(v);
+                } catch (RejectException ex) {
+                    /** Ignore RejectException. */
+                }
             }
+        } catch (StopException ex) {
+            _finalVertex = finalVertex;
+            _finalEdge = finalEdge;
         }
     }
 
@@ -272,8 +290,6 @@ public class Traversal<VLabel, ELabel> {
 
     /** Already visited vertices in the last traversal. */
     private Set<Graph<VLabel, ELabel>.Vertex> _marked;
-    /** Already postVisited vertices in the last traversal. */
-    private Set<Graph<VLabel, ELabel>.Vertex> _processed;
     /** Type of last traversal. */
     private TraversalTypes _lastTraversalType;
     /** Order of last general traversal. */
