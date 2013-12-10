@@ -28,6 +28,7 @@ public class TargetBuilder {
         _ruleList = ruleList;
         _changeMap = changeMap;
         _targetList = targetList;
+        _builtSet = new HashSet<String>();
     }
 
     /** Builds this TargetBuilder's targets. */
@@ -42,6 +43,10 @@ public class TargetBuilder {
     }
 
     private void buildTarget(String target, boolean forceBuild) {
+        if (_builtSet.contains(target)) {
+            return;
+        }
+
         Rule rule = ruleForTarget(target);
         Long age = _changeMap.get(target);
         if (rule == null) {
@@ -63,7 +68,7 @@ public class TargetBuilder {
         for (String prereq : rule.prereqSet()) {
             buildTarget(prereq, false);
             prereqAge = _changeMap.get(prereq);
-            if (prereqAge != null && age != null && prereqAge > age) {
+            if ((age != null && prereqAge != null) && prereqAge > age) {
                 build = true;
             }
         }
@@ -73,7 +78,7 @@ public class TargetBuilder {
                 //FIXME?
                 System.out.println(cmnd);
             }
-            _changeMap.put(target, System.currentTimeMillis() / 1000L);
+            _builtSet.add(target);
         }
     }
 
@@ -251,5 +256,7 @@ public class TargetBuilder {
     private final List<Rule> _ruleList;
     /** Maps objects (targets) to last build time. */
     private final Map<String, Long> _changeMap;
+    /** Stores already built objects. */
+    private final Set<String> _builtSet;
 
 }
