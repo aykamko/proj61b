@@ -20,11 +20,12 @@ import graph.NoLabel;
  */
 public class TargetBuilder {
 
-    /** Constructor for TargetBuilder. RULELIST is a list of rules to build
-     *  TARGETLIST with. CHANGEMAP maps objects to their last build times. */
-    TargetBuilder(List<Rule> ruleList, Map<String, Long> changeMap,
+    /** Constructor for TargetBuilder. RULEMAP is a map from targets to Rules
+     *  to build TARGETLIST with. CHANGEMAP maps objects to their last
+     *  build times. */
+    TargetBuilder(Map<String, Rule> ruleMap, Map<String, Long> changeMap,
             List<String> targetList) {
-        _ruleList = ruleList;
+        _ruleMap = ruleMap;
         _changeMap = changeMap;
         _targetList = targetList;
         _builtSet = new HashSet<String>();
@@ -84,35 +85,7 @@ public class TargetBuilder {
     /** Returns the Rule associated with TARGET, or null if no rule
      *  exists. */
     private Rule ruleForTarget(String target) {
-        Rule result = null;
-        for (Rule r: _ruleList) {
-            if (r.target().equals(target)) {
-                result = r;
-                break;
-            }
-        }
-        return result;
-    }
-
-    /** Checks that all targets exist. Throws a MakeException otherwise. */
-    private void checkTargets() throws MakeException {
-        boolean hasTarget = false;
-        for (String target : _targetList) {
-            if (_changeMap.get(target) == null) {
-                for (Rule rule : _ruleList) {
-                    if (rule.target().equals(target)) {
-                        hasTarget = true;
-                        break;
-                    }
-                }
-                if (!hasTarget) {
-                    String err = String.format(
-                            "target '%s' does not exist", target);
-                    throw new MakeException(err);
-                }
-            }
-            hasTarget = false;
-        }
+        return _ruleMap.get(target);
     }
 
     /** Constructs a dependency graph from _ruleList. */
@@ -123,19 +96,18 @@ public class TargetBuilder {
             new HashMap<String, Graph<InCountLabel, NoLabel>.Vertex>();
 
         String target = null;
-        Set<String> commandSet;
+        Set<String> prereqSet;
         List<Graph<InCountLabel, NoLabel>.Vertex> vlist;
-        for (Rule rule : _ruleList) {
+        for (Rule rule : _ruleMap.values()) {
             vlist = new LinkedList<Graph<InCountLabel, NoLabel>.Vertex>();
             target = rule.target();
-            commandSet = rule.commandSet();
+            prereqSet = rule.prereqSet();
 
-            for (String cmnd : commandSet) {
-                Graph<InCountLabel, NoLabel>.Vertex v =
-                    addedMap.get(cmnd);
+            for (String prereq : prereqSet) {
+                Graph<InCountLabel, NoLabel>.Vertex v = addedMap.get(prereq);
                 if (v == null) {
-                    v = _depGraph.add(new InCountLabel(cmnd));
-                    addedMap.put(cmnd, v);
+                    v = _depGraph.add(new InCountLabel(prereq));
+                    addedMap.put(prereq, v);
                 }
                 vlist.add(v);
             }
@@ -147,6 +119,9 @@ public class TargetBuilder {
             }
 
             for (Graph<InCountLabel, NoLabel>.Vertex u : vlist) {
+                if (_depGraph.contains(t, u)) {
+                    throw new MakeException("circular dependency detected");
+                }
                 _depGraph.add(u, t);
             }
 
@@ -251,8 +226,8 @@ public class TargetBuilder {
     private List<String> _sortedTargets;
     /** List of targets to build. */
     private final List<String> _targetList;
-    /** List of rules to build targets with. */
-    private final List<Rule> _ruleList;
+    /** Maps target names to their respective rules. */
+    private final Map<String, Rule> _ruleMap;
     /** Maps objects (targets) to last build time. */
     private final Map<String, Long> _changeMap;
     /** Stores already built objects. */

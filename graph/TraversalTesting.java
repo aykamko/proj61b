@@ -220,7 +220,7 @@ public class TraversalTesting {
         @Override
         protected void preVisit(Graph<Character, String>.Edge e,
                                 Graph<Character, String>.Vertex v) {
-            _visitList.add("a" + v.toString());
+            _visitList.add("a" + e.getV(v).toString());
         }
 
         @Override

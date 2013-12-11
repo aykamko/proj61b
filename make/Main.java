@@ -76,22 +76,23 @@ public final class Main {
     private static void make(String makefileName, String fileInfoName,
                              List<String> targets) {
         Map<String, Long> changeMap = new HashMap<String, Long>();
-        List<Rule> ruleList = new ArrayList<Rule>();
+        Map<String, Rule> ruleMap = new HashMap<String, Rule>();
+        Rule firstRule = null;
 
         try {
             readFileInfoFile(new File(fileInfoName), changeMap);
-            readMakeFile(new File(makefileName), ruleList);
+            firstRule = readMakeFile(new File(makefileName), ruleMap);
         } catch (IOException | IllegalArgumentException
                 | NoSuchElementException e) {
             usage();
         }
 
         if (targets.isEmpty()) {
-            targets.add(ruleList.get(0).target());
+            targets.add(firstRule.target());
         }
 
         TargetBuilder builder =
-            new TargetBuilder(ruleList, changeMap, targets);
+            new TargetBuilder(ruleMap, changeMap, targets);
         try {
             builder.buildTargets();
         } catch (MakeException e) {
@@ -138,19 +139,20 @@ public final class Main {
         _scn.close();
     }
 
-    /** Reads the MAKEFILE and stores each rule as a Rule object in RULELIST.
-     *  Throws an exception if the file does not exist or if there is some
-     *  format error. */
-    private static void readMakeFile(File makeFile, List<Rule> ruleList)
+    /** Reads the MAKEFILE and stores each rule as a Rule object in RULEMAP.
+     *  Returns the first Rule to be added to RULEMAP. Throws an exception if
+     *  the file does not exist or if there is some format error. */
+    private static Rule readMakeFile(File makeFile, Map<String, Rule> ruleMap)
         throws IOException, IllegalArgumentException {
         _scn = new Scanner(makeFile);
 
-        Scanner headerScn;
-        Matcher headerMatcher;
-        Matcher commandMatcher;
-        Rule rule = null;
+        Matcher ignoreMatcher, headerMatcher, commandMatcher;
+        Rule rule, firstRule;
         String target, line;
 
+        boolean duplicate = false;
+        rule = firstRule = null;
+        target = line = null;
         if (!_scn.hasNextLine()) {
             throw new MakeException("empty makefile");
         }
@@ -159,36 +161,60 @@ public final class Main {
         if (!headerMatcher.matches()) {
             throw new MakeException("no rule for command set");
         }
-        rule = makeRule(line);
+        target = headerMatcher.group(1);
+        firstRule = rule = makeRule(target, headerMatcher.group(2));
+        ruleMap.put(target, rule);
 
         while (_scn.hasNextLine()) {
             line = _scn.nextLine();
-            if (line.isEmpty()) {
-                continue;
-            }
 
             headerMatcher = HEADER_REGEX.matcher(line);
             if (headerMatcher.matches()) {
-                ruleList.add(rule);
-                rule = makeRule(line);
+                target = headerMatcher.group(1);
+                rule = ruleMap.get(target);
+                if (rule == null) {
+                    rule = makeRule(target, headerMatcher.group(2));
+                    ruleMap.put(target, rule);
+                    duplicate = false;
+                } else {
+                    extendRule(target, headerMatcher.group(2), rule);
+                    if (!rule.commandSet().isEmpty()) {
+                        duplicate = true;
+                    }
+                }
                 continue;
             }
 
             commandMatcher = CMND_REGEX.matcher(line);
-            if (commandMatcher.matches()) {
+            if (commandMatcher.matches() && !duplicate) {
                 rule.addCommand(line);
-            } else {
+                continue;
+            }
+
+            ignoreMatcher = IGNORE.matcher(line);
+            if (!ignoreMatcher.matches()) {
                 throw new MakeException("syntax error in command: " + line);
             }
         }
-        ruleList.add(rule);
+        ruleMap.put(target, rule);
+        return firstRule;
     }
 
-    /** Returns a Rule made from the header string HEADER. */
-    private static Rule makeRule(String header) {
+    /** Adds targets specified in HEADER to TARGET's RULE. */
+    private static void extendRule(String target, String header, Rule rule) {
+        if (!target.equals(rule.target())) {
+            throw new MakeException("wrong rule for header");
+        }
         _headScn = new Scanner(header);
-        String target = _headScn.next();
-        Rule rule = new Rule(target.substring(0, target.length() - 1));
+        while (_headScn.hasNext()) {
+            rule.addPrereq(_headScn.next());
+        }
+    }
+
+    /** Returns a Rule made from the header string HEADER with target TARGET. */
+    private static Rule makeRule(String target, String header) {
+        _headScn = new Scanner(header);
+        Rule rule = new Rule(target);
         while (_headScn.hasNext()) {
             rule.addPrereq(_headScn.next());
         }
@@ -223,9 +249,13 @@ public final class Main {
 
     /** Regex to match a header of a Rule. */
     private static final Pattern HEADER_REGEX =
-        Pattern.compile("[^:=#\\s\\\\]+:[^:=#\\\\]*");
+        Pattern.compile("([^:=#\\s\\\\]+):\\s*([^:=#\\\\]*)");
     /** Regex to match a command for a Rule. */
     private static final Pattern CMND_REGEX =
         Pattern.compile("[\\s\\t]+.+");
+
+    /** Regex to match ignored lines. */
+    private static final Pattern IGNORE =
+        Pattern.compile("([\\s\\t]*)|(#.*)");
 
 }

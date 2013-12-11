@@ -76,7 +76,7 @@ public class Traversal<VLabel, ELabel> {
                         if (!_marked.contains(u)) {
                             finalEdge = d;
                             try {
-                                preVisit(d, u);
+                                preVisit(d, v);
                                 fringe.add(u);
                             } catch (RejectException ex) {
                                 /* Ignore RejectException. */
@@ -133,7 +133,7 @@ public class Traversal<VLabel, ELabel> {
                         if (!_marked.contains(u)) {
                             finalEdge = d;
                             try {
-                                preVisit(d, u);
+                                preVisit(d, v);
                                 if (!fringe.contains(u)) {
                                     fringe.addFirst(u);
                                 }
@@ -193,7 +193,7 @@ public class Traversal<VLabel, ELabel> {
                         if (!_marked.contains(u)) {
                             finalEdge = d;
                             try {
-                                preVisit(d, u);
+                                preVisit(d, v);
                                 if (!fringe.contains(u)) {
                                     fringe.addLast(u);
                                 }

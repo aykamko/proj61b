@@ -1,12 +1,16 @@
 package graph;
 
-import java.util.Comparator;
-
 import java.util.List;
 import java.util.LinkedList;
 
+import java.util.Set;
+import java.util.HashSet;
+import java.util.TreeSet;
+
 import java.util.Map;
 import java.util.HashMap;
+
+import java.util.Comparator;
 
 /** Assorted graph algorithms.
  *  @author Aleks Kamko
@@ -35,40 +39,57 @@ public final class Graphs {
     public static <VLabel, ELabel> List<Graph<VLabel, ELabel>.Edge>
     shortestPath(Graph<VLabel, ELabel> G,
                  Graph<VLabel, ELabel>.Vertex V0,
-                 final Graph<VLabel, ELabel>.Vertex V1,
-                 final Distancer<? super VLabel> h,
-                 final Weighter<? super VLabel> vweighter,
+                 Graph<VLabel, ELabel>.Vertex V1,
+                 Distancer<? super VLabel> h,
+                 Weighter<? super VLabel> vweighter,
                  Weighting<? super ELabel> eweighter) {
+        Set<Graph<VLabel, ELabel>.Vertex> closedSet =
+            new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        TreeSet<Graph<VLabel, ELabel>.Vertex> openSet =
+            new TreeSet<Graph<VLabel, ELabel>.Vertex>
+            (new GenericVertexWeightOrderComparator<VLabel, ELabel>
+            (h, V1, vweighter));
+        Map<Graph<VLabel, ELabel>.Vertex,
+            Graph<VLabel, ELabel>.Edge> vertEdgeMap =
+            new HashMap<Graph<VLabel, ELabel>.Vertex,
+                Graph<VLabel, ELabel>.Edge>();
 
         for (Graph<VLabel, ELabel>.Vertex v : G.vertices()) {
             vweighter.setWeight(v.getLabel(), Double.POSITIVE_INFINITY);
         }
         vweighter.setWeight(V0.getLabel(), 0);
+        openSet.add(V0);
 
-        LinkedList<Graph<VLabel, ELabel>.Edge> path =
-            new LinkedList<Graph<VLabel, ELabel>.Edge>();
-        Traversal<VLabel, ELabel> astar =
-            new AStarTraversalGeneral<VLabel, ELabel>(
-                    V1, h, vweighter, eweighter, path);
-
-        Comparator<VLabel> weightOrder = new Comparator<VLabel>() {
-            @Override
-            public int compare(VLabel l0, VLabel l1) {
-                Double l0Weight = h.dist(l0, V1.getLabel())
-                    + vweighter.weight(l0);
-                Double l1Weight = h.dist(l1, V1.getLabel())
-                    + vweighter.weight(l1);
-
-                return Double.compare(l0Weight, l1Weight);
+        Graph<VLabel, ELabel>.Vertex v, u;
+        Double newScore, curScore;
+        while (!openSet.isEmpty()) {
+            v = openSet.pollFirst();
+            if (v == V1) {
+                return reconstructPath(vertEdgeMap, v);
             }
-        };
 
-        astar.traverse(G, V0, weightOrder);
-        if (path.isEmpty()) {
-            return null;
+            closedSet.add(v);
+            for (Graph<VLabel, ELabel>.Edge e : G.outEdges(v)) {
+                u = e.getV(v);
+                newScore = vweighter.weight(v.getLabel())
+                    + eweighter.weight(e.getLabel());
+                curScore = vweighter.weight(u.getLabel());
+                if (closedSet.contains(u)
+                        && Double.compare(newScore, curScore) >= 0) {
+                    continue;
+                }
+
+                if (!openSet.contains(u)
+                        || Double.compare(newScore, curScore) < 0) {
+                    vertEdgeMap.put(u, e);
+                    openSet.remove(u);
+                    vweighter.setWeight(u.getLabel(), newScore);
+                    openSet.add(u);
+                }
+            }
         }
 
-        return path;
+        return null;
     }
 
     /** Returns a path from V0 to V1 in G of minimum weight, according
@@ -97,179 +118,134 @@ public final class Graphs {
     List<Graph<VLabel, ELabel>.Edge>
     shortestPath(Graph<VLabel, ELabel> G,
                  Graph<VLabel, ELabel>.Vertex V0,
-                 final Graph<VLabel, ELabel>.Vertex V1,
-                 final Distancer<? super VLabel> h) {
+                 Graph<VLabel, ELabel>.Vertex V1,
+                 Distancer<? super VLabel> h) {
+        Set<Graph<VLabel, ELabel>.Vertex> closedSet =
+            new HashSet<Graph<VLabel, ELabel>.Vertex>();
+        TreeSet<Graph<VLabel, ELabel>.Vertex> openSet =
+            new TreeSet<Graph<VLabel, ELabel>.Vertex>
+            (new WeightableVertexWeightOrderComparator<VLabel, ELabel>(h, V1));
+        Map<Graph<VLabel, ELabel>.Vertex,
+            Graph<VLabel, ELabel>.Edge> vertEdgeMap =
+            new HashMap<Graph<VLabel, ELabel>.Vertex,
+                Graph<VLabel, ELabel>.Edge>();
 
         for (Graph<VLabel, ELabel>.Vertex v : G.vertices()) {
             v.getLabel().setWeight(Double.POSITIVE_INFINITY);
         }
         V0.getLabel().setWeight(0);
+        openSet.add(V0);
 
+        Graph<VLabel, ELabel>.Vertex v, u;
+        Double newScore, curScore;
+        while (!openSet.isEmpty()) {
+            v = openSet.pollFirst();
+            if (v == V1) {
+                return reconstructPath(vertEdgeMap, v);
+            }
+
+            closedSet.add(v);
+            for (Graph<VLabel, ELabel>.Edge e : G.outEdges(v)) {
+                u = e.getV(v);
+                newScore = v.getLabel().weight() + e.getLabel().weight();
+                curScore = u.getLabel().weight();
+                if (closedSet.contains(u)
+                        && Double.compare(newScore, curScore) >= 0) {
+                    continue;
+                }
+
+                if (!openSet.contains(u)
+                        || Double.compare(newScore, curScore) < 0) {
+                    vertEdgeMap.put(u, e);
+                    openSet.remove(u);
+                    u.getLabel().setWeight(newScore);
+                    openSet.add(u);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Reconstructs the path from LASTVERTEX to the beginning of an A*
+     *  traversal, as defined by VERTEDGEMAP. Returns the path in a List.
+     *  VLABEL is the type of vertex labels, and ELABEL is the type of
+     *  edge labels. */
+    private static <VLabel, ELabel> List<Graph<VLabel, ELabel>.Edge>
+    reconstructPath(
+            Map<Graph<VLabel, ELabel>.Vertex,
+                Graph<VLabel, ELabel>.Edge> vertEdgeMap,
+            Graph<VLabel, ELabel>.Vertex lastVertex) {
+        if (lastVertex == null) {
+            return null;
+        }
+
+        Graph<VLabel, ELabel>.Edge edge = vertEdgeMap.get(lastVertex);
         LinkedList<Graph<VLabel, ELabel>.Edge> path =
             new LinkedList<Graph<VLabel, ELabel>.Edge>();
-        Traversal<VLabel, ELabel> astarweighted =
-            new AStarTraversalWeightableLabels<VLabel, ELabel>(V1, h, path);
-
-        Comparator<VLabel> weightOrder = new Comparator<VLabel>() {
-            @Override
-            public int compare(VLabel l0, VLabel l1) {
-                Double l0Weight = h.dist(l0, V1.getLabel())
-                    + l0.weight();
-                Double l1Weight = h.dist(l1, V1.getLabel())
-                    + l1.weight();
-
-                return Double.compare(l0Weight, l1Weight);
-            }
-        };
-
-        astarweighted.traverse(G, V0, weightOrder);
-        if (path.isEmpty()) {
-            return null;
+        while (edge != null) {
+            path.addFirst(edge);
+            lastVertex = edge.getV(lastVertex);
+            edge = vertEdgeMap.get(lastVertex);
         }
 
         return path;
     }
 
-    /** Subclass of Traversal that uses the A* algorithm as its general
-     *  traversal. Uses a Weighter and Weighting to set and read weights
-     *  for Vertices and Edges. */
-    private static class AStarTraversalGeneral<VLabel, ELabel>
-            extends Traversal<VLabel, ELabel> {
+    /** Comparator that order Vertices by weight order. */
+    private static class GenericVertexWeightOrderComparator<VLabel, ELabel>
+        implements Comparator<Graph<VLabel, ELabel>.Vertex> {
 
-        /** Constructor for a Traversal that uses A* as its general traversal.
-         *  ENDVERTEX is the vertex to end the traversal at. H is a distancer
-         *  that returns the distance between two Vertices based on their
-         *  VLabels. VWEIGHTER and EWEIGHTER set and read weights for
-         *  Vertices and Edges. SHORTESTLIST becomes the shortest path from
-         *  some starting vertex to ENDVERTEX, if there is one; otherwise it
-         *  is null. */
-        AStarTraversalGeneral(Graph<VLabel, ELabel>.Vertex endVertex,
-                Distancer<? super VLabel> h,
-                Weighter<? super VLabel> vweighter,
-                Weighting<? super ELabel> eweighter,
-                LinkedList<Graph<VLabel, ELabel>.Edge> shortestList) {
-            _endVertex = endVertex;
+        /** Default constructor. Takes in a Distancer H, an ending
+         *  vertex END, and a VLabel Weighter VWEIGHTER. */
+        GenericVertexWeightOrderComparator(Distancer<? super VLabel> h,
+            Graph<VLabel, ELabel>.Vertex end,
+            Weighter<? super VLabel> vweighter) {
             _h = h;
+            _end = end;
             _vweighter = vweighter;
-            _eweighter = eweighter;
-            _shortestList = shortestList;
-            _linkMap = new HashMap<Graph<VLabel, ELabel>.Edge,
-                     Graph<VLabel, ELabel>.Edge>();
-            _lastEdgeMap = new HashMap<Graph<VLabel, ELabel>.Vertex,
-                            Graph<VLabel, ELabel>.Edge>();
         }
 
         @Override
-        protected void preVisit(Graph<VLabel, ELabel>.Edge e,
-                                Graph<VLabel, ELabel>.Vertex v) {
-            ELabel elabel = e.getLabel();
-            VLabel vlabel = v.getLabel();
-            VLabel lastLabel = _lastVertex.getLabel();
+        public int compare(Graph<VLabel, ELabel>.Vertex v0,
+                Graph<VLabel, ELabel>.Vertex v1) {
+            Double v0Weight = getVertexWeight(v0)
+                + _h.dist(v0.getLabel(), _end.getLabel());
+            Double v1Weight = getVertexWeight(v1)
+                + _h.dist(v1.getLabel(), _end.getLabel());
 
-            double vweight = getVLabelWeight(vlabel);
-            double lastWeight = getVLabelWeight(lastLabel);
-            double edgeWeight = getELabelWeight(elabel);
-
-            if (vweight > (edgeWeight + lastWeight)) {
-                setVLabelWeight(vlabel, edgeWeight + lastWeight);
-
-                Graph<VLabel, ELabel>.Edge lastEdge =
-                    _lastEdgeMap.get(_lastVertex);
-                _linkMap.put(e, lastEdge);
-                _lastEdgeMap.put(v, e);
-            } else {
-                throw new RejectException();
-            }
+            return Double.compare(v0Weight, v1Weight);
         }
 
-        @Override
-        protected void visit(Graph<VLabel, ELabel>.Vertex v) {
-            if (v == _endVertex) {
-                Graph<VLabel, ELabel>.Edge lastEdge = _lastEdgeMap.get(v);
-                while (lastEdge != null) {
-                    _shortestList.addFirst(lastEdge);
-                    lastEdge = _linkMap.get(lastEdge);
-                }
-                throw new StopException();
-            } else {
-                _lastVertex = v;
-            }
+        /** Returns the weight of Vertex V. */
+        protected Double getVertexWeight(Graph<VLabel, ELabel>.Vertex v) {
+            return _vweighter.weight(v.getLabel());
         }
 
-        /** Returns a Double that represents the weight of VLabel V. */
-        protected Double getVLabelWeight(VLabel v) {
-            return _vweighter.weight(v);
-        }
-
-        /** Sets weight of VLabel V to W. */
-        protected void setVLabelWeight(VLabel v, double w) {
-            _vweighter.setWeight(v, w);
-        }
-
-        /** Returns a Double that represents the weight of ELabel E. */
-        protected Double getELabelWeight(ELabel e) {
-            return _eweighter.weight(e);
-        }
-
-        /** Map that represents a linked tree. Each key is an Edge, each value
-         *  is an Edge that is the 'parent' of the key Edge in a shortest path
-         *  from the initial Edge to the key Edge. */
-        protected final Map<Graph<VLabel, ELabel>.Edge,
-                Graph<VLabel, ELabel>.Edge> _linkMap;
-        /** Vertex to end traversal at. */
-        protected final Graph<VLabel, ELabel>.Vertex _endVertex;
-        /** Computes crow distance between two vertices. */
-        protected final Distancer<? super VLabel> _h;
-        /** Set and reads weights for VLabels. */
-        protected final Weighter<? super VLabel> _vweighter;
-        /** Reads weights of ELabels. */
-        protected final Weighting<? super ELabel> _eweighter;
-
-        /** Last visited vertex. */
-        protected Graph<VLabel, ELabel>.Vertex _lastVertex;
-        /** Map of last traversed edges. */
-        protected Map<Graph<VLabel, ELabel>.Vertex,
-                Graph<VLabel, ELabel>.Edge> _lastEdgeMap;
-        /** Shortest path from the starting vertex of a traversal to
-         *  _endVertex, if it exists. null otherwise. */
-        protected final LinkedList<Graph<VLabel, ELabel>.Edge> _shortestList;
+        /** Ending vertex. Used to measure distance. */
+        private final Graph<VLabel, ELabel>.Vertex _end;
+        /** Measures distances between vertices. */
+        private final Distancer<? super VLabel> _h;
+        /** Weights vertices. */
+        private final Weighter<? super VLabel> _vweighter;
     }
 
-
-    /** Subclass of AStarGeneralTraversal that necessitates that Vertices and
-     *  Edges extend Weightable and Weighted, respectively. Weights are set and
-     *  read using inherited methods from the previously mentioned classes. */
-    private static class
-    AStarTraversalWeightableLabels
+    /** Comparator that orders Vertices by weight order. Vertices must
+     *  implement Weightable. */
+    private static class WeightableVertexWeightOrderComparator
         <VLabel extends Weightable, ELabel extends Weighted>
-        extends AStarTraversalGeneral<VLabel, ELabel> {
+        extends GenericVertexWeightOrderComparator<VLabel, ELabel> {
 
-        /** Constructor for a Traversal that uses A* as its general traversal.
-         *  Vertices and Edges are assumed to extend Weightable and Weighted,
-         *  respectively. ENDVERTEX is the vertex to end the traversal at. H
-         *  is a dlstancer that returns the distance between two Vertices based
-         *  on their VLabels. SHORTESTLIST becomes the shortest path from some
-         *  starting vertex to ENDVERTEX, if there is one; otherwise it is
-         *  null. */
-        AStarTraversalWeightableLabels(Graph<VLabel, ELabel>.Vertex endVertex,
-                Distancer<? super VLabel> h,
-                LinkedList<Graph<VLabel, ELabel>.Edge> shortestList) {
-            super(endVertex, h, null, null, shortestList);
+        /** Default constructor. Takes in a Distancer H and an ending
+         *  vertex END. */
+        WeightableVertexWeightOrderComparator(Distancer<? super VLabel> h,
+            Graph<VLabel, ELabel>.Vertex end) {
+            super(h, end, null);
         }
 
         @Override
-        protected Double getVLabelWeight(VLabel v) {
-            return v.weight();
-        }
-
-        @Override
-        protected void setVLabelWeight(VLabel v, double w) {
-            v.setWeight(w);
-        }
-
-        @Override
-        protected Double getELabelWeight(ELabel e) {
-            return e.weight();
+        protected Double getVertexWeight(Graph<VLabel, ELabel>.Vertex v) {
+            return v.getLabel().weight();
         }
     }
 

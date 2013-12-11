@@ -34,6 +34,11 @@ class Trip {
      *  direction as the previously added road, then both are collapsed into
      *  one road. */
     public void addRoad(Road road) {
+        if (road.name().equals("US6")) {
+            int i = 1;
+        }
+
+
         Road prevRoad = null;
         try {
             prevRoad = _path.getLast();

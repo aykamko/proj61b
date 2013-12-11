@@ -58,7 +58,7 @@ public class TripFinder {
     private Trip findTrip(String start, String end) {
         List<Graph<Location, Road>.Edge> elist =
             Graphs.shortestPath(_mapGraph, _vmap.get(start),
-                    _vmap.get(end), Graphs.ZERO_DISTANCER);
+                    _vmap.get(end), new LocationDistancer());
         if (elist == null) {
             String error = String.format("impossible to travel from %s to %s.",
                     start, end);
