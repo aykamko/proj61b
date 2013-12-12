@@ -80,7 +80,7 @@ public final class Main {
         Rule firstRule = null;
 
         try {
-            readFileInfoFile(new File(fileInfoName), changeMap);
+            readInfoFile(new File(fileInfoName), changeMap);
             firstRule = readMakeFile(new File(makefileName), ruleMap);
         } catch (IOException | IllegalArgumentException
                 | NoSuchElementException e) {
@@ -105,7 +105,7 @@ public final class Main {
     /** Reads the INFOFILE file and stores the current time and changetime for
      *  each name in the CHANGEMAP Map. Throws an exception if the file does
      *  not exist or if there is some format error. */
-    private static void readFileInfoFile(File infoFile,
+    private static void readInfoFile(File infoFile,
             Map<String, Long> changeMap)
         throws IOException, IllegalArgumentException, NoSuchElementException {
         _scn = new Scanner(infoFile);
@@ -178,7 +178,7 @@ public final class Main {
                     duplicate = false;
                 } else {
                     extendRule(target, headerMatcher.group(2), rule);
-                    if (!rule.commandSet().isEmpty()) {
+                    if (!rule.commandList().isEmpty()) {
                         duplicate = true;
                     }
                 }

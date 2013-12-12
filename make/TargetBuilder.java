@@ -1,6 +1,5 @@
 package make;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,6 +12,8 @@ import java.util.Map;
 import graph.Graph;
 import graph.DirectedGraph;
 import graph.NoLabel;
+
+import static make.MakeException.error;
 
 /** Class that builds targets for the 'make' program and updates targets'
  *  changedate.
@@ -33,28 +34,25 @@ public class TargetBuilder {
 
     /** Builds this TargetBuilder's targets. */
     public void buildTargets() {
-        constructGraph();
-        _sortedTargets = topologicalSort(_depGraph);
-
+        checkMakefileUsingGraph();
         for (String target : _targetList) {
             buildTarget(target, true);
         }
     }
 
     /** Builds TARGET if FORCEBUILD is true, if it has at least one younger
-     *  prerequisite, or if it has no previously recorded changedate. */
+     *  prerequisite, or if it has no previously recorded changedate. Throws
+     *  a MakeException if an error is encountered with a target. */
     private void buildTarget(String target, boolean forceBuild) {
         if (_builtSet.contains(target)) {
             return;
         }
 
-        Rule rule = ruleForTarget(target);
+        Rule rule = _ruleMap.get(target);
         Long age = _changeMap.get(target);
         if (rule == null) {
             if (age == null) {
-                String error = String.format(
-                        "target '%s' does not exist", target);
-                throw new MakeException(error);
+                throw error("target '%s' does not exist", target);
             } else {
                 return;
             }
@@ -69,161 +67,60 @@ public class TargetBuilder {
         for (String prereq : rule.prereqSet()) {
             buildTarget(prereq, false);
             prereqAge = _changeMap.get(prereq);
-            if ((age != null && prereqAge != null) && prereqAge > age) {
+            if (age != null && prereqAge != null && prereqAge > age) {
                 build = true;
             }
         }
 
         if (build) {
-            for (String cmnd : rule.commandSet()) {
+            for (String cmnd : rule.commandList()) {
                 System.out.println(cmnd);
             }
             _builtSet.add(target);
         }
     }
 
-    /** Returns the Rule associated with TARGET, or null if no rule
-     *  exists. */
-    private Rule ruleForTarget(String target) {
-        return _ruleMap.get(target);
-    }
-
-    /** Constructs a dependency graph from _ruleList. */
-    private void constructGraph() {
-        _depGraph = new DirectedGraph<InCountLabel, NoLabel>();
-
-        Map<String, Graph<InCountLabel, NoLabel>.Vertex> addedMap =
-            new HashMap<String, Graph<InCountLabel, NoLabel>.Vertex>();
+    /** Constructs a dependency graph from _ruleList to check for circular
+     *  dependencies. Throws a MakeException if a circular dependency is
+     *  detected. */
+    private void checkMakefileUsingGraph() {
+        DirectedGraph<String, NoLabel> depGraph =
+            new DirectedGraph<String, NoLabel>();
+        Map<String, Graph<String, NoLabel>.Vertex> addedMap =
+            new HashMap<String, Graph<String, NoLabel>.Vertex>();
 
         String target = null;
         Set<String> prereqSet;
-        List<Graph<InCountLabel, NoLabel>.Vertex> vlist;
+        List<Graph<String, NoLabel>.Vertex> vlist;
         for (Rule rule : _ruleMap.values()) {
-            vlist = new LinkedList<Graph<InCountLabel, NoLabel>.Vertex>();
+            vlist = new LinkedList<Graph<String, NoLabel>.Vertex>();
             target = rule.target();
             prereqSet = rule.prereqSet();
 
             for (String prereq : prereqSet) {
-                Graph<InCountLabel, NoLabel>.Vertex v = addedMap.get(prereq);
+                Graph<String, NoLabel>.Vertex v = addedMap.get(prereq);
                 if (v == null) {
-                    v = _depGraph.add(new InCountLabel(prereq));
+                    v = depGraph.add(prereq);
                     addedMap.put(prereq, v);
                 }
                 vlist.add(v);
             }
 
-            Graph<InCountLabel, NoLabel>.Vertex t = addedMap.get(target);
+            Graph<String, NoLabel>.Vertex t = addedMap.get(target);
             if (t == null) {
-                t = _depGraph.add(new InCountLabel(target));
+                t = depGraph.add(target);
                 addedMap.put(target, t);
             }
 
-            for (Graph<InCountLabel, NoLabel>.Vertex u : vlist) {
-                if (_depGraph.contains(t, u)) {
+            for (Graph<String, NoLabel>.Vertex u : vlist) {
+                if (depGraph.contains(t, u)) {
                     throw new MakeException("circular dependency detected");
                 }
-                _depGraph.add(u, t);
+                depGraph.add(u, t);
             }
-
-        }
-
-        for (Graph<InCountLabel, NoLabel>.Vertex v : _depGraph.vertices()) {
-            InCountLabel vlabel = v.getLabel();
-            vlabel.setInCount(_depGraph.inDegree(v));
         }
     }
 
-    /** Returns a list of the vertices in graph G in topologically sorted
-     *  order. */
-    private static List<String>
-    topologicalSort(Graph<InCountLabel, NoLabel> g) {
-
-        List<String> sorted = new ArrayList<String>();
-
-        LinkedList<Graph<InCountLabel, NoLabel>.Vertex> fringe =
-            new LinkedList<Graph<InCountLabel, NoLabel>.Vertex>();
-        for (Graph<InCountLabel, NoLabel>.Vertex v : g.vertices()) {
-            if (v.getLabel().inCount() == 0) {
-                fringe.add(v);
-            }
-        }
-        if (fringe.isEmpty()) {
-            throw new MakeException("circular dependency in makefile");
-        }
-
-        Graph<InCountLabel, NoLabel>.Vertex v;
-        while (!fringe.isEmpty()) {
-            v = fringe.pollFirst();
-            sorted.add(v.toString());
-            for (Graph<InCountLabel, NoLabel>.Vertex u : g.successors(v)) {
-                InCountLabel uLabel = u.getLabel();
-                uLabel.decrementInCount();
-                if (uLabel.inCount() == 0) {
-                    fringe.add(u);
-                }
-            }
-        }
-
-        return sorted;
-    }
-
-    /** Class for labeling vertices. InCountLabel has a String label to
-     *  designate a vertex, and an inCount() representing the number of
-     *  incoming edges to the vertex. */
-    private static class InCountLabel {
-
-        /** Constructs an InCountLabel with LABEL and an inCount() of -1. */
-        InCountLabel(String label) {
-            _label = label;
-            _inCount = -1;
-        }
-
-        @Override
-        public String toString() {
-            return _label;
-        }
-
-        /** Sets _inCount to INCOUNT. */
-        public void setInCount(int inCount) {
-            _inCount = inCount;
-        }
-
-        /** Decrements _inCount by 1. */
-        public void decrementInCount() {
-            _inCount -= 1;
-        }
-
-        /** Returns an int representing the number of incoming edges to the
-         *  labeled vertex. */
-        public int inCount() {
-            return _inCount;
-        }
-
-        @Override
-        public int hashCode() {
-            return _label.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof InCountLabel) {
-                InCountLabel compareLabel = (InCountLabel) obj;
-                return _label.equals(obj.toString());
-            }
-            return false;
-        }
-
-        /** Label for the vertex. */
-        private String _label;
-        /** Number of incoming edges to the vertex. */
-        private int _inCount;
-    }
-
-    /** Dependency graph with vertices representing targets and directed edges
-     *  representing dependencies. */
-    private DirectedGraph<InCountLabel, NoLabel> _depGraph;
-    /** List of targets in topologically sorted dependency order. */
-    private List<String> _sortedTargets;
     /** List of targets to build. */
     private final List<String> _targetList;
     /** Maps target names to their respective rules. */

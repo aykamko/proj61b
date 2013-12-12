@@ -3,6 +3,9 @@ package make;
 import java.util.HashSet;
 import java.util.Set;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /** Represents a Rule for a target in a Makefile.
  *  @author Aleks Kamko
  */
@@ -11,7 +14,7 @@ class Rule {
     /** Constructs a rule with target TARGET. */
     Rule(String target) {
         _target = target;
-        _commandSet = new HashSet<String>();
+        _commandList = new LinkedList<String>();
         _prereqSet = new HashSet<String>();
     }
 
@@ -25,9 +28,9 @@ class Rule {
         return _prereqSet;
     }
 
-    /** Returns the target set for this rule. */
-    public Set<String> commandSet() {
-        return _commandSet;
+    /** Returns the command list for this rule. */
+    public List<String> commandList() {
+        return _commandList;
     }
 
     /** Adds PREREQ to this Rule's prerequisite set. */
@@ -35,9 +38,9 @@ class Rule {
         _prereqSet.add(prereq);
     }
 
-    /** Adds COMMAND to this Rule's command set. */
+    /** Adds COMMAND to this Rule's command list. */
     public void addCommand(String command) {
-        _commandSet.add(command);
+        _commandList.add(command);
     }
 
     @Override
@@ -49,7 +52,7 @@ class Rule {
     private final String _target;
     /** Prerequisite set for this rule. */
     private Set<String> _prereqSet;
-    /** Command set for this rule. */
-    private Set<String> _commandSet;
+    /** Command list for this rule. */
+    private List<String> _commandList;
 
 }
