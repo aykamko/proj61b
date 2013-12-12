@@ -145,34 +145,15 @@ public final class Main {
                 String start = roadMatcher.group(1);
                 String name = roadMatcher.group(2);
                 Double length = new Double(roadMatcher.group(3));
-                String dirString = roadMatcher.group(4);
+                Direction direction = firstCharDirection(roadMatcher.group(4));
                 String end = roadMatcher.group(5);
-
-                Direction direction = null;
-                switch (dirString) {
-                case "NS": {
-                    direction = SOUTH;
-                    break;
-                } case "SN": {
-                    direction = NORTH;
-                    break;
-                } case "EW": {
-                    direction = WEST;
-                    break;
-                } case "WE": {
-                    direction = EAST;
-                    break;
-                } default: {
-                    throw new TripException("no direction given");
-                }
-                }
 
                 _roads.add(new Road(start, name, length, direction, end));
                 _roads.add(new Road(end, name, length, direction.opposite(),
                                     start));
                 continue;
             } else if (!line.isEmpty()) {
-                throw new IllegalArgumentException();
+                throw new TripException("incorrect mapfile format");
             }
         }
     }

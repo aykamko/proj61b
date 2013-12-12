@@ -51,7 +51,7 @@ public class TargetBuilderTesting {
         tb.buildTargets();
     }
 
-    /** Returns the callable Object returned by invoking the private method
+    /** Returns the castable Object returned by invoking the private method
      *  NAME with parameters PARAMS of object OBJ with arguments ARGS. Throws
      *  a MakeException if the underlying method threw an exception. */
     private Object callPrivateMethod(Object obj, String name,

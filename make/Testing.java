@@ -95,7 +95,7 @@ public class Testing {
                                     target, header, rule);
     }
 
-    /** Returns the callable Object returned by invoking the private method
+    /** Returns the castable Object returned by invoking the private method
      *  NAME with parameters PARAMS of object OBJ with arguments ARGS. */
     private Object callPrivateMethod(Object obj, String name,
             Class<?>[] params, Object... args) {

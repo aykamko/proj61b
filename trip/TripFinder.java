@@ -9,6 +9,8 @@ import java.util.Scanner;
 
 import java.util.NoSuchElementException;
 
+import static trip.TripException.error;
+
 import graph.Graph;
 import graph.Graphs;
 import graph.Distancer;
@@ -33,6 +35,7 @@ public class TripFinder {
      *  locations. */
     public List<Trip> findTrips() {
         _scn = new Scanner(System.in).useDelimiter(",\\s+");
+
         List<Trip> result = new LinkedList<Trip>();
         String start, end;
         start = end = null;
@@ -60,9 +63,7 @@ public class TripFinder {
             Graphs.shortestPath(_mapGraph, _vmap.get(start),
                     _vmap.get(end), new LocationDistancer());
         if (elist == null) {
-            String error = String.format("impossible to travel from %s to %s.",
-                    start, end);
-            throw new TripException(error);
+            throw error("impossible to travel from %s to %s.", start, end);
         }
 
         Trip result = new Trip(start, end);
@@ -79,8 +80,7 @@ public class TripFinder {
     private static class LocationDistancer implements Distancer<Location> {
         @Override
         public double dist(Location l0, Location l1) {
-            return Math.hypot(l1.xPos() - l0.xPos(),
-                    l1.yPos() - l0.yPos());
+            return Math.hypot(l1.xPos() - l0.xPos(), l1.yPos() - l0.yPos());
         }
     }
 
