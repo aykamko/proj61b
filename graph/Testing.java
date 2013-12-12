@@ -24,8 +24,8 @@ public class Testing {
     /** Run all JUnit tests in the graph package. */
     public static void main(String[] ignored) {
         System.exit(textui.runClasses(graph.Testing.class,
-                                      graph.GraphsTesting.class,
-                                      graph.TraversalTesting.class));
+                                      graph.TraversalTesting.class,
+                                      graph.GraphsTesting.class));
     }
 
     @Test
@@ -75,12 +75,10 @@ public class Testing {
             assertEquals("Graph did not add proper vertex",
                     v.getLabel(), labels[i]);
         }
-
-
     }
 
     @Test
-    public void addEdges() {
+    public void addEdgesUndirected() {
         UndirectedGraph<Integer, Integer> g =
             new UndirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -182,7 +180,7 @@ public class Testing {
     }
 
     @Test
-    public void removeEdge1() {
+    public void removeEdge() {
         UndirectedGraph<Integer, Integer> g =
             new UndirectedGraph<Integer, Integer>();
         Integer[] vLabels = new Integer[]{ 0, 1, 2 };

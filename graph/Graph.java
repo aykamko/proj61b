@@ -39,9 +39,6 @@ import java.util.Iterator;
  */
 public abstract class Graph<VLabel, ELabel> {
 
-    /** Constant for use in .hashCode methods. */
-    private static final int HASH_CONST = 31;
-
     /** Represents one of my vertices. */
     public class Vertex {
 
@@ -58,64 +55,59 @@ public abstract class Graph<VLabel, ELabel> {
         }
 
         /** Adds an outgoing edge EDGE from this vertex. */
-        private void addOutgoingEdge(Edge edge) {
+        void addOutgoingEdge(Edge edge) {
             _outgoing.add(edge);
         }
 
         /** Adds an incoming edge EDGE from this vertex. */
-        private void addIncomingEdge(Edge edge) {
+        void addIncomingEdge(Edge edge) {
             _incoming.add(edge);
         }
 
         /** Adds an edge EDGE to this vertex. (In an undirected graph.) */
-        private void addEdge(Edge edge) {
-            _outgoing.add(edge);
+        void addEdge(Edge edge) {
+            addOutgoingEdge(edge);
         }
 
         /** Removes outgoing edge EDGE from this vertex. */
-        private void removeOutgoing(Edge edge) {
+        void removeOutgoing(Edge edge) {
             _outgoing.remove(edge);
         }
 
         /** Removes incoming edge EDGE from this vertex. */
-        private void removeIncoming(Edge edge) {
+        void removeIncoming(Edge edge) {
             _incoming.remove(edge);
         }
 
         /** Removes edge EDGE from this vertex. (Convenience method for
          *  undirected graphs.) */
-        private void removeEdge(Edge edge) {
-            _outgoing.remove(edge);
+        void removeEdge(Edge edge) {
+            removeOutgoing(edge);
         }
 
         /** Returns an iterator over the outgoing edges of this vertex. */
-        private Iterator<Edge> outgoingEdges() {
+        Iterator<Edge> outgoingEdges() {
             return _outgoing.iterator();
         }
 
         /** Returns an iterator over the incoming edges of this vertex. */
-        private Iterator<Edge> incomingEdges() {
+        Iterator<Edge> incomingEdges() {
             return _incoming.iterator();
         }
 
         /** Returns the number of outgoing edges from this vertex. */
-        private int outDegree() {
+        int outDegree() {
             return _outgoing.size();
         }
 
         /** Returns the number of incoming edges into this vertex. */
-        private int inDegree() {
+        int inDegree() {
             return _incoming.size();
-        }
-
-        /** Returns the number of edges adjacent this vertex. */
-        private int degree() {
-            return _outgoing.size() + _incoming.size();
         }
 
         /** Returns true iff this Vertex contains an outgoing edge
          *  with V as its opposite vertex. */
-        private boolean containsEdgeTo(Vertex v) {
+        boolean containsEdgeTo(Vertex v) {
             for (Edge e : _outgoing) {
                 if (e.getV(this) == v) {
                     return true;
@@ -126,7 +118,7 @@ public abstract class Graph<VLabel, ELabel> {
 
         /** Returns true iff this Vertex contains an outgoing edge
          *  with label LABEL with V as its opposite vertex. */
-        private boolean containsEdgeToWithLabel(Vertex v, ELabel label) {
+        boolean containsEdgeToWithLabel(Vertex v, ELabel label) {
             for (Edge e : _outgoing) {
                 if (e.getV(this) == v && e.getLabel().equals(label)) {
                     return true;
@@ -263,65 +255,22 @@ public abstract class Graph<VLabel, ELabel> {
     /** Returns an edge incident on FROM and TO, labeled with LABEL
      *  and adds it to this graph. If I am directed, the edge is directed
      *  (leaves FROM and enters TO). */
-    public Edge add(Vertex from,
-                    Vertex to,
-                    ELabel label) {
-        Edge e = new Edge(from, to, label);
-
-        if (isDirected()) {
-            from.addOutgoingEdge(e);
-            to.addIncomingEdge(e);
-        } else {
-            from.addOutgoingEdge(e);
-            to.addOutgoingEdge(e);
-        }
-
-        _edges.add(e);
-        return e;
-    }
+    public abstract Edge add(Vertex from, Vertex to, ELabel label);
 
     /** Returns an edge incident on FROM and TO with a null label
      *  and adds it to this graph. If I am directed, the edge is directed
      *  (leaves FROM and enters TO). */
-    public Edge add(Vertex from,
+    public final Edge add(Vertex from,
                     Vertex to) {
         return add(from, to, null);
     }
 
     /** Remove V and all adjacent edges, if present. */
-    public void remove(Vertex v) {
-        Vertex other;
-        Set<Edge> elist = new HashSet<Edge>();
-        if (isDirected()) {
-            for (Edge e : outEdges(v)) {
-                elist.add(e);
-            }
-            for (Edge e : inEdges(v)) {
-                elist.add(e);
-            }
-        } else {
-            for (Edge e : edges(v)) {
-                elist.add(e);
-            }
-        }
-        for (Edge e : elist) {
-            remove(e);
-        }
-        _vertices.remove(v);
-    }
+    public abstract void remove(Vertex v);
 
     /** Remove E from me, if present.  E must be between my vertices,
      *  or the result is undefined.  */
-    public void remove(Edge e) {
-        if (isDirected()) {
-            e.getV0().removeOutgoing(e);
-            e.getV1().removeIncoming(e);
-        } else {
-            e.getV0().removeOutgoing(e);
-            e.getV1().removeOutgoing(e);
-        }
-        _edges.remove(e);
-    }
+    public abstract void remove(Edge e);
 
     /** Remove all edges from V1 to V2 from me, if present.  The result is
      *  undefined if V1 and V2 are not among my vertices.  */
@@ -335,6 +284,16 @@ public abstract class Graph<VLabel, ELabel> {
         for (Edge e : elist) {
             remove(e);
         }
+    }
+
+    /** Returns this graph's TreeSet of Edges. */
+    TreeSet<Edge> edgeSet() {
+        return _edges;
+    }
+
+    /** Returns this graph's TreeSet of Edges. */
+    TreeSet<Vertex> vertexSet() {
+        return _vertices;
     }
 
     /** Returns an Iterator over all vertices in arbitrary order. */
@@ -353,7 +312,6 @@ public abstract class Graph<VLabel, ELabel> {
         return Iteration.iteration(
                 new OtherVertexIterator(inEdges(v), v));
     }
-
 
     /** Returns successors(V).  This is a synonym typically used on
      *  undirected graphs. */

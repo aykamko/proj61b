@@ -11,6 +11,66 @@ import java.util.LinkedList;
 public class TraversalTesting {
 
     @Test
+    public void generalTraversalDirected() {
+        DirectedGraph<Integer, String> g =
+            new DirectedGraph<Integer, String>();
+
+        LinkedList<String> visitList = new LinkedList<String>();
+        Traversal<Integer, String> markTraversal =
+            new OrderedTraversal(visitList);
+
+        Graph<Integer, String>.Vertex vA = g.add(0);
+        Graph<Integer, String>.Vertex vD = g.add(3);
+        Graph<Integer, String>.Vertex vF = g.add(5);
+        Graph<Integer, String>.Vertex vB = g.add(1);
+        Graph<Integer, String>.Vertex vC = g.add(2);
+        Graph<Integer, String>.Vertex vE = g.add(4);
+
+        addEdge(g, vA, vB, "AB");
+        addEdge(g, vA, vC, "AC");
+        addEdge(g, vA, vD, "AD");
+        addEdge(g, vA, vE, "AE");
+        addEdge(g, vA, vF, "AF");
+
+        markTraversal.traverse(g, vA, Graph.<Integer>naturalOrder());
+
+        assertArrayEquals("Incorrect: depth-first",
+                new String[]{ "b0", "a1", "a2", "a3", "a4", "a5", "b1", "b2",
+                              "b3", "b4", "b5" },
+                visitList.toArray());
+    }
+
+    @Test
+    public void generalTraversalUndirected() {
+        UndirectedGraph<Integer, String> g =
+            new UndirectedGraph<Integer, String>();
+
+        LinkedList<String> visitList = new LinkedList<String>();
+        Traversal<Integer, String> markTraversal =
+            new OrderedTraversal(visitList);
+
+        Graph<Integer, String>.Vertex vA = g.add(0);
+        Graph<Integer, String>.Vertex vB = g.add(1);
+        Graph<Integer, String>.Vertex vC = g.add(2);
+        Graph<Integer, String>.Vertex vD = g.add(3);
+        Graph<Integer, String>.Vertex vE = g.add(4);
+        Graph<Integer, String>.Vertex vF = g.add(5);
+
+        addEdge(g, vA, vB, "AB");
+        addEdge(g, vB, vC, "BC");
+        addEdge(g, vB, vD, "BD");
+        addEdge(g, vC, vE, "CE");
+        addEdge(g, vD, vF, "DF");
+
+        markTraversal.traverse(g, vA, Graph.<Integer>naturalOrder());
+
+        assertArrayEquals("Incorrect: depth-first",
+                new String[]{ "b0", "a1", "b1", "a2", "a3", "b2", "a4", "b3",
+                              "a5", "b4", "b5" },
+                visitList.toArray());
+    }
+
+    @Test
     public void depthFirstDirected1() {
         DirectedGraph<Character, String> g =
             new DirectedGraph<Character, String>();
@@ -210,6 +270,30 @@ public class TraversalTesting {
                               "aF", "cA", "cB", "cC", "bE", "bF", "cD", "cE",
                               "cF" },
                 visitList.toArray());
+    }
+
+    private static class OrderedTraversal extends Traversal<Integer, String> {
+        OrderedTraversal(LinkedList<String> visitList) {
+            _visitList = visitList;
+        }
+
+        @Override
+        protected void preVisit(Graph<Integer, String>.Edge e,
+                                Graph<Integer, String>.Vertex v) {
+            _visitList.add("a" + e.getV(v).toString());
+        }
+
+        @Override
+        protected void visit(Graph<Integer, String>.Vertex v) {
+            _visitList.add("b" + v.toString());
+        }
+
+        @Override
+        protected void postVisit(Graph<Integer, String>.Vertex v) {
+            _visitList.add("c" + v.toString());
+        }
+
+        private final LinkedList<String> _visitList;
     }
 
     private static class MarkTraversal extends Traversal<Character, String> {

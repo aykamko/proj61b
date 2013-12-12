@@ -315,8 +315,7 @@ public class Traversal<VLabel, ELabel> {
         @Override
         public int compare(Graph<VLabel, ELabel>.Vertex v0,
             Graph<VLabel, ELabel>.Vertex v1) {
-            int value = _comparator.compare(v0.getLabel(), v1.getLabel());
-            return value;
+            return _comparator.compare(v0.getLabel(), v1.getLabel());
         }
 
         /** VLabel Comparator to base order off of. */
