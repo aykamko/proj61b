@@ -1,0 +1,5 @@
+Usage:
+
+         [ -f MAKEFILE ] [ -D FILEINFO ] TARGET1 TARGET2 ...
+
+    Builds specified target using MAKEFILE and FILEINFO.

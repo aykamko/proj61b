@@ -1,5 +1,9 @@
 package make;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +14,8 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import java.util.Scanner;
+
+import static java.lang.System.out;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -223,7 +229,20 @@ public final class Main {
 
     /** Print a brief usage message and exit program abnormally. */
     private static void usage() {
-        System.err.println("USAGE");
+        try {
+            InputStream resource =
+                Main.class.getClassLoader().getResourceAsStream(USAGE);
+            BufferedReader str =
+                new BufferedReader(new InputStreamReader(resource));
+            for (String s = str.readLine(); s != null; s = str.readLine())  {
+                out.println(s);
+            }
+            str.close();
+            out.flush();
+        } catch (IOException excp) {
+            out.printf("No usage found.");
+            out.flush();
+        }
         System.exit(1);
     }
 
@@ -257,5 +276,8 @@ public final class Main {
     /** Regex to match ignored lines. */
     private static final Pattern IGNORE =
         Pattern.compile("([\\s\\t]*)|(#.*)");
+
+    /** Location of usage message resource. */
+    static final String USAGE = "make/Usage.txt";
 
 }

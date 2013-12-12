@@ -1,5 +1,8 @@
 package trip;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -21,6 +24,7 @@ import java.io.IOException;
 import java.io.File;
 
 import static trip.Direction.*;
+import static java.lang.System.out;
 
 import graph.Graph;
 import graph.DirectedGraph;
@@ -160,7 +164,20 @@ public final class Main {
 
     /** Print a brief usage message and exit program abnormally. */
     private static void usage() {
-        System.err.println("USAGE");
+        try {
+            InputStream resource =
+                Main.class.getClassLoader().getResourceAsStream(USAGE);
+            BufferedReader str =
+                new BufferedReader(new InputStreamReader(resource));
+            for (String s = str.readLine(); s != null; s = str.readLine())  {
+                out.println(s);
+            }
+            str.close();
+            out.flush();
+        } catch (IOException excp) {
+            out.printf("No usage found.");
+            out.flush();
+        }
         System.exit(1);
     }
 
@@ -185,5 +202,8 @@ public final class Main {
     private static List<Location> _locations;
     /** Scanner for map file and requests. */
     private static Scanner _scn;
+
+    /** Location of usage message resource. */
+    static final String USAGE = "trip/Usage.txt";
 
 }

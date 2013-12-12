@@ -1,0 +1,9 @@
+Usage:
+
+        java -ea trip.Main [ -m MAP ] [ -o OUT ] [ REQUEST ]
+    where MAP (default Map) contains the map data, OUT (default standard
+    output) takes the result, and REQUEST (default standard input) contains
+    the locations along the requested trip.
+
+    Trip computes the shortest path between each location in REQUEST, and
+    outputs the path in a clean, collapsed format.
