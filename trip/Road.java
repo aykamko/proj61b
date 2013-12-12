@@ -56,7 +56,7 @@ class Road implements Weighted, Comparable<Road> {
 
     @Override
     public String toString() {
-        return String.format("%s:  %s --> %s (%s, %.1f)", _name, _start, _end, 
+        return String.format("%s:  %s --> %s (%s, %.1f)", _name, _start, _end,
                 _direction, _length);
     }
 
